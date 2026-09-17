@@ -103,7 +103,7 @@
             </div>
           </div>
 
-          <!-- TAB 1: INPUT SATUAN (AUTOFILL CONFIG & MODE EDIT) -->
+          <!-- TAB 1: INPUT SATUAN -->
           <div class="tab-pane fade" id="single" role="tabpanel">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h5 class="text-primary fw-bold mb-0" id="formTitle">Formulir Input Data Pegawai</h5>
@@ -210,7 +210,7 @@
             <div id="pdfAlertBox" class="mt-3"></div>
           </div>
 
-          <!-- TAB 4: CETAK & FILTER (DENGAN EXPORT EXCEL) -->
+          <!-- TAB 4: CETAK & FILTER -->
           <div class="tab-pane fade" id="printArea" role="tabpanel">
             <h5 class="mb-3 text-dark fw-bold">Pencarian, Filter & Cetak Data Pegawai</h5>
             <p class="text-muted">Cari, saring berdasarkan Satker, cetak, atau unduh rekapitulasi data ke format Excel.</p>
@@ -322,25 +322,33 @@
               </div>
             </div>
 
-            <!-- KOTAK FAQ -->
-            <div id="faqSection" class="card shadow-sm mb-3 d-none border-primary">
+            <!-- KOTAK FAQ ORIGINAL LENGKAP -->
+            <div id="faqSection" class="card shadow-sm mb-3 border-primary">
               <div class="card-header bg-primary text-white py-2 fw-bold" style="font-size: 13px;">📌 FAQ & Panduan Lengkap Aplikasi</div>
-              <div class="card-body p-2" style="max-height: 250px; overflow-y: auto;">
+              <div class="card-body p-3" style="max-height: 280px; overflow-y: auto;">
                 <div class="accordion accordion-flush" id="faqAccordion">
-                  <div class="accordion-item">
+                  <div class="accordion-item mb-2 border rounded">
                     <h2 class="accordion-header" id="headingOne">
-                      <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" style="font-size: 12px;">1. Apa fungsi utama dari aplikasi ini?</button>
+                      <button class="accordion-button py-2 fw-bold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" style="font-size: 12px;">1. Bagaimana cara melakukan input data pegawai baru?</button>
                     </h2>
-                    <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                      <div class="accordion-body py-2 text-muted" style="font-size: 11px;">Mengelola data pegawai PPPK Paruh Waktu Kementerian Sosial mulai dari input, import, upload dokumen PDF, hingga cetak nominatif.</div>
+                    <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                      <div class="accordion-body py-2 text-secondary" style="font-size: 11px;">Buka menu <b>Input Satuan</b>, lalu ketik NIP atau Nama pegawai. Sistem akan otomatis menarik data dasar dari sheet <i>config</i>. Jika NIP sudah terdaftar, form otomatis masuk ke <i>Mode Edit</i> untuk memperbarui data.</div>
                     </div>
                   </div>
-                  <div class="accordion-item">
+                  <div class="accordion-item mb-2 border rounded">
                     <h2 class="accordion-header" id="headingTwo">
-                      <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" style="font-size: 12px;">2. Kapan batas akhir pengisian data?</button>
+                      <button class="accordion-button collapsed py-2 fw-bold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" style="font-size: 12px;">2. Bagaimana aturan upload dokumen PDF massal Perjanjian Kerja?</button>
                     </h2>
                     <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                      <div class="accordion-body py-2 text-muted" style="font-size: 11px;">Batas akhir pengusulan dan pengisian adalah tanggal <b>30 September 2026</b>.</div>
+                      <div class="accordion-body py-2 text-secondary" style="font-size: 11px;">Pastikan nama file berformat <b>NIP_NamaPanggilan.pdf</b> (contoh: <code>199004052026011001_Toni.pdf</code>). Pilih Satker yang sesuai, lalu pilih maksimal 50 file PDF sekaligus per proses unggah.</div>
+                    </div>
+                  </div>
+                  <div class="accordion-item mb-2 border rounded">
+                    <h2 class="accordion-header" id="headingThree">
+                      <button class="accordion-button collapsed py-2 fw-bold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" style="font-size: 12px;">3. Kapan batas akhir pengisian dan pengusulan data?</button>
+                    </h2>
+                    <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                      <div class="accordion-body py-2 text-secondary" style="font-size: 11px;">Batas akhir pengusulan dan pengisian seluruh data serta kelengkapan dokumen adalah tanggal <b>30 September 2026 pukul 23:59 WIB</b>.</div>
                     </div>
                   </div>
                 </div>
@@ -757,7 +765,7 @@
         if (found) {
           reply = `📄 <b>Ditemukan Data Pegawai:</b><br>- <b>Nama:</b> ${found.nama}<br>- <b>NIP:</b> ${found.ni}<br>- <b>Jabatan:</b> ${found.jabatan}<br>- <b>Satker:</b> ${found.satker}<br>- <b>Status:</b> ${found.isInputed ? 'Sudah Input ✅' : 'Belum Input ❌'}`;
         } else if (lower.includes("upload") || lower.includes("pdf")) {
-          reply = "Untuk upload PDF massal pastikan format nama file NIP_Nama.pdf dan maksimal 50 file per batch.";
+          reply = "For upload PDF massal pastikan format nama file NIP_Nama.pdf dan maksimal 50 file per batch.";
         } else {
           reply = "Silakan tanyakan seputar alur aplikasi atau ketik NIP/Nama pegawai untuk melihat kartu data instan.";
         }
