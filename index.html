@@ -1036,7 +1036,7 @@
       container.scrollTop = container.scrollHeight;
 
       setTimeout(function() {
-        var reply = "Silahkan hubungi Mas Bentar Ganteng";
+        var reply = "Silahkan hubungi Admin, dikarenakan Sistem Interaktif masih dalam Tahap Pengembangan";
         var lower = text.toLowerCase();
         
         if (lower.includes("upload") || lower.includes("pdf")) {
@@ -1044,7 +1044,7 @@
         } else if (lower.includes("tanggal") || lower.includes("kontrak")) {
           reply = "Tanggal kontrak otomatis 1 Nov 2026 s.d. 31 Okt 2027.";
         } else if (lower.includes("bantuan") || lower.includes("error") || lower.includes("halo")) {
-          reply = "Silahkan hubungi Mas Bentar Ganteng";
+          reply = "Silahkan hubungi Admin, dikarenakan Sistem Interaktif masih dalam Tahap Pengembangan";
         }
 
         container.innerHTML += '<div class="chat-bubble chat-admin">' + reply + '</div>';
