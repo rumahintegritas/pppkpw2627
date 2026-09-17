@@ -6,812 +6,412 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Aplikasi Manajemen Data Pegawai & Kontrak</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Pustaka SheetJS untuk Ekspor Excel (.xlsx) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
-    /* CSS TAMBAHAN AGAR TAMPILAN RESPONSIF & TIDAK TERPOTONG DI SEMUA LAYAR */
-    .custom-tabs {
-      display: flex;
-      flex-wrap: wrap;
-    }
-    .custom-tabs .nav-item {
-      flex: 1 1 auto;
-      text-align: center;
-    }
+    .custom-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+    .custom-tabs .nav-item { flex: 1 1 auto; text-align: center; }
     .custom-tabs .nav-link {
-      color: #495057 !important;
-      background-color: #e9ecef;
-      border: 1px solid #ced4da;
-      margin-right: 5px;
-      font-weight: 600;
-      margin-bottom: 5px;
-      width: 100%;
-      white-space: normal !important;
-      font-size: 13px;
-      padding: 8px 10px;
+      color: #495057 !important; background-color: #e9ecef; border: 1px solid #ced4da;
+      font-weight: 600; width: 100%; font-size: 12px; padding: 8px 10px; border-radius: 6px;
     }
-    .custom-tabs .nav-link.active {
-      color: #fff !important;
-      background-color: #0d6efd !important;
-      border-color: #0d6efd;
-    }
-    .dashboard-card {
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-    .dashboard-card:hover {
-      transform: translateY(-3px);
-    }
+    .custom-tabs .nav-link.active { color: #fff !important; background-color: #0d6efd !important; border-color: #0d6efd; }
     .announcement-bar {
-      background-color: #fff3cd;
-      color: #856404;
-      border: 1px solid #ffeeba;
-      border-radius: 6px;
-      padding: 10px 15px;
-      margin-bottom: 20px;
-      font-weight: 600;
-      overflow: hidden;
-      white-space: nowrap;
-      box-shadow: inset 0 1px 2px rgba(0,0,0,.075);
+      background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;
+      border-radius: 6px; padding: 10px 15px; margin-bottom: 20px; font-weight: 600; overflow: hidden; white-space: nowrap;
     }
-    .running-text {
-      display: inline-block;
-      animation: marquee 25s linear infinite;
-    }
-    .running-text:hover {
-      animation-play-state: paused;
-    }
-    @keyframes marquee {
-      0%   { transform: translateX(100%); }
-      100% { transform: translateX(-100%); }
-    }
-    .countdown-badge {
-      background-color: #dc3545;
-      color: white;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-family: monospace;
-      margin-left: 10px;
-    }
-    .chat-box {
-      height: 160px;
-      overflow-y: auto;
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
-      border-radius: 6px;
-      padding: 8px;
-    }
-    .chat-bubble {
-      margin-bottom: 6px;
-      padding: 5px 8px;
-      border-radius: 8px;
-      max-width: 85%;
-      font-size: 11px;
-    }
-    .chat-user {
-      background: #0d6efd;
-      color: white;
-      margin-left: auto;
-      text-align: right;
-    }
-    .chat-admin {
-      background: #e9ecef;
-      color: #212529;
-    }
-    .help-action-btn {
-      transition: all 0.2s;
-    }
-    .help-action-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    @media print {
-      @page {
-        size: landscape;
-      }
-      body * {
-        visibility: hidden;
-      }
-      #printableArea, #printableArea * {
-        visibility: visible;
-      }
-      #printableArea {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-      }
-      .no-print {
-        display: none !important;
-      }
-    }
+    .running-text { display: inline-block; animation: marquee 25s linear infinite; }
+    @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+    .countdown-badge { background-color: #dc3545; color: white; padding: 2px 8px; border-radius: 4px; font-family: monospace; }
+    .chat-box { height: 180px; overflow-y: auto; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 8px; }
+    .chat-bubble { margin-bottom: 6px; padding: 6px 10px; border-radius: 8px; max-width: 85%; font-size: 12px; }
+    .chat-user { background: #0d6efd; color: white; margin-left: auto; text-align: right; }
+    .chat-admin { background: #e9ecef; color: #212529; }
+    .stat-card { border-left: 5px solid #0d6efd; border-radius: 8px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
   </style>
 </head>
 <body class="bg-light" onload="initApp()">
   <div class="container-fluid my-4 px-4">
-    <div class="row justify-content-center">
-      <div class="col-md-12">
-        <div class="card shadow-sm mb-4">
-          <div class="card-header bg-white border-bottom p-3 no-print">
-            
-            <div class="announcement-bar no-print">
-              <div class="running-text">
-                ⚠️ <b>Penting!</b> Batas Akhir Pengusulan dan Pengisian pada tanggal 30 September 2026 
-                <span id="countdownDisplay" class="countdown-badge">Memuat Waktu...</span> ⏰
-              </div>
-            </div>
-
-            <h4 class="mb-3 text-dark fw-bold">Manajemen Data Pegawai & Kontrak</h4>
-            <ul class="nav nav-pills custom-tabs" id="myTab" role="tablist">
-              <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="single-tab" data-bs-toggle="tab" data-bs-target="#single" type="button" role="tab" onclick="loadSatkerDatalists()">Input Satuan</button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link" id="import-tab" data-bs-toggle="tab" data-bs-target="#import" type="button" role="tab">Import Excel</button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link" id="pdf-tab" data-bs-toggle="tab" data-bs-target="#pdfUpload" type="button" role="tab" onclick="loadSatkerDatalists()">Upload Surat Persetujuan</button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link" id="print-tab" data-bs-toggle="tab" data-bs-target="#printArea" type="button" role="tab" onclick="loadSatkerDatalists(); loadDashboard();">Cetak & Filter</button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link" id="batch-tab" data-bs-toggle="tab" data-bs-target="#batchUpload" type="button" role="tab" onclick="loadSatkerDatalists()">Upload Dokumen Massal Perjanjian Kerja</button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link bg-info text-white" id="helpdesk-tab" data-bs-toggle="tab" data-bs-target="#helpdeskArea" type="button" role="tab" onclick="loadTicketHistory()">🛟 Helpdesk & Bantuan</button>
-              </li>
-            </ul>
-          </div>
-          
-          <div class="card-body p-4">
-            <div class="tab-content" id="myTabContent">
-              
-              <!-- TAB 1: INPUT SATUAN -->
-              <div class="tab-pane fade show active" id="single" role="tabpanel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h5 class="text-primary fw-bold mb-0">Formulir Input Data Pegawai</h5>
-                  <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" onclick="resetFormManual()">🔄 Refresh / Bersihkan Form</button>
-                </div>
-                <div id="loadingStatus" class="alert alert-warning py-2 mb-3" style="font-size: 13px;">⏳ Memuat database pegawai dari sheet config...</div>
-                
-                <form id="pegawaiForm" onsubmit="handleFormSubmit(event)">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">NI PPPK / NIP / Nomor Identitas (Bisa Ketik Manual / Pilih)</label>
-                    <input type="text" class="form-control" id="niPppk" list="niOptions" placeholder="Ketik NIP atau pilih dari database..." oninput="isiOtomatisOlehNi(this.value)" onchange="isiOtomatisOlehNi(this.value)" required>
-                    <datalist id="niOptions"></datalist>
-                  </div>
-
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Nama Pegawai (Bisa Ketik Manual / Pilih sampai akhir)</label>
-                    <input type="text" class="form-control" id="namaPegawai" list="namaOptions" placeholder="Ketik nama atau pilih dari database..." oninput="isiOtomatisOlehNama(this.value)" onchange="isiOtomatisOlehNama(this.value)" required>
-                    <datalist id="namaOptions"></datalist>
-                  </div>
-
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Jenis Kelamin</label>
-                    <input type="text" class="form-control" id="jenisKelamin" placeholder="Contoh: Laki-Laki / Perempuan" required>
-                  </div>
-
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Tempat, Tanggal Lahir</label>
-                    <input type="text" class="form-control" id="ttl" placeholder="Contoh: Jakarta, 22 September 1996" required>
-                  </div>
-
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Golongan</label>
-                    <input type="text" class="form-control" id="golongan" placeholder="Contoh: III/a atau 0" required>
-                  </div>
-
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Nama Jabatan</label>
-                    <input type="text" class="form-control" id="namaJabatan" required>
-                  </div>
-
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Nama Satuan Kerja (Satker) - Ketik atau Pilih</label>
-                    <input class="form-control" list="satkerOptionsInput" id="namaSatker" placeholder="Ketik atau pilih Satuan Kerja..." required>
-                    <datalist id="satkerOptionsInput"></datalist>
-                  </div>
-
-                  <div class="row">
-                    <div class="col-md-6 mb-3">
-                      <label class="form-label fw-bold">Tanggal Mulai Kontrak</label>
-                      <input type="date" class="form-control" id="tglMulai" value="2026-11-01" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                      <label class="form-label fw-bold">Tanggal Berakhir Kontrak</label>
-                      <input type="date" class="form-control" id="tglAkhir" value="2027-10-31" required>
-                    </div>
-                  </div>
-
-                  <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" id="submitBtn">Simpan Data</button>
-                </form>
-                <div id="alertBox" class="mt-3"></div>
-              </div>
-
-              <!-- TAB 2: IMPORT EXCEL -->
-              <div class="tab-pane fade" id="import" role="tabpanel">
-                <h5 class="mb-3 text-success fw-bold">Import Data Massal Excel (.xlsx)</h5>
-                <p class="text-muted">Unggah file berformat <b>Excel (.xlsx)</b> asli untuk memasukkan banyak data sekaligus.</p>
-                
-                <div class="alert alert-info p-3 mb-3">
-                  <span class="fw-bold">Belum punya templat Excel?</span><br>
-                  Unduh file contoh format Excel di bawah ini, lalu isi datanya.<br>
-                  <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="downloadExcelTemplate()">📥 Unduh Templat Excel (.xlsx)</button>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label fw-bold">Pilih File Excel / CSV</label>
-                  <input type="file" class="form-control" id="excelFile" accept=".xlsx, .xls, .csv">
-                </div>
-
-                <button type="button" class="btn btn-success w-100 py-2 fw-bold" id="importBtn" onclick="handleImportExcel()">Proses Import Data</button>
-                <div id="importAlertBox" class="mt-3"></div>
-              </div>
-
-              <!-- TAB 3: UPLOAD SURAT PERSETUJUAN -->
-              <div class="tab-pane fade" id="pdfUpload" role="tabpanel">
-                <h5 class="mb-3 text-danger fw-bold">Upload Dokumen Surat Persetujuan (PDF) Berdasarkan Satker</h5>
-                <p class="text-muted">Ketik atau pilih Satuan Kerja, lalu pilih file dokumen PDF surat persetujuannya untuk diunggah.</p>
-                
-                <form id="pdfForm" onsubmit="handlePdfSubmit(event)">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Satuan Kerja (Satker) - Ketik atau Pilih</label>
-                    <input class="form-control" list="satkerOptionsPdf" id="selectSatkerPdf" placeholder="Ketik atau pilih Satker..." required>
-                    <datalist id="satkerOptionsPdf"></datalist>
-                  </div>
-
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Pilih File Dokumen PDF Surat Persetujuan (.pdf)</label>
-                    <input type="file" class="form-control" id="pdfFile" accept=".pdf" required>
-                    <small class="text-muted">File akan diunggah otomatis ke Google Drive dan ditautkan ke seluruh pegawai pada Satker terpilih.</small>
-                  </div>
-
-                  <button type="submit" class="btn btn-danger w-100 py-2 fw-bold" id="pdfSubmitBtn">Upload & Tautkan ke Satker</button>
-                </form>
-                <div id="pdfAlertBox" class="mt-3"></div>
-              </div>
-
-              <!-- TAB 4: CETAK & FILTER -->
-              <div class="tab-pane fade" id="printArea" role="tabpanel">
-                <h5 class="mb-3 text-dark fw-bold no-print">Pencarian, Dashboard & Cetak Data Pegawai</h5>
-                <p class="text-muted no-print">Ringkasan status unggahan dokumen per Satuan Kerja. Klik pada kartu untuk memilih Satker secara instan.</p>
-                
-                <div class="row mb-4 no-print">
-                  <div class="col-md-6 mb-2">
-                    <div class="card text-bg-success dashboard-card shadow-sm" onclick="filterSatkerByStatus('sudah')">
-                      <div class="card-body py-3 d-flex justify-content-between align-items-center">
-                        <div>
-                          <h6 class="card-title mb-0 fw-bold">Sudah Upload Dokumen PDF</h6>
-                          <small id="countSudah" class="text-white-50">Memuat...</small>
-                        </div>
-                        <span class="fs-3">✅</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-md-6 mb-2">
-                    <div class="card text-bg-warning dashboard-card shadow-sm" onclick="filterSatkerByStatus('belum')">
-                      <div class="card-body py-3 d-flex justify-content-between align-items-center">
-                        <div>
-                          <h6 class="card-title mb-0 fw-bold text-dark">Belum Upload Dokumen PDF</h6>
-                          <small id="countBelum" class="text-dark opacity-75">Memuat...</small>
-                        </div>
-                        <span class="fs-3">⚠️</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="row g-3 mb-4 no-print">
-                  <div class="col-md-5">
-                    <label class="form-label fw-bold">Filter Satuan Kerja (Satker) - Bisa Ketik</label>
-                    <input class="form-control" list="satkerOptionsCetak" id="filterSatker" placeholder="Ketik atau pilih Satker..." oninput="filterDataCetak()" onchange="filterDataCetak()">
-                    <datalist id="satkerOptionsCetak"></datalist>
-                  </div>
-                  <div class="col-md-5">
-                    <label class="form-label fw-bold">Cari Nama / NIP</label>
-                    <input type="text" class="form-control" id="filterKeyword" placeholder="Ketik nama atau NI PPPK..." onkeyup="filterDataCetak()">
-                  </div>
-                  <div class="col-md-2 d-flex align-items-end">
-                    <button type="button" class="btn btn-secondary w-100 fw-bold" onclick="window.print()">🖨️ Cetak</button>
-                  </div>
-                </div>
-
-                <div id="printableArea">
-                  <div class="text-center mb-4">
-                    <h5 class="fw-bold text-uppercase" id="judulCetak">Daftar Nominatif Pegawai Pemerintah dengan Perjanjian Kerja Paruh Waktu di Lingkungan Kementerian Sosial</h5>
-                    <hr>
-                  </div>
-                  <div class="table-responsive">
-                    <table class="table table-bordered table-striped align-middle" style="font-size: 11px;">
-                      <thead class="table-dark text-center">
-                        <tr>
-                          <th>NO.</th>
-                          <th>NI PPPK / NIP</th>
-                          <th>NAMA PEGAWAI</th>
-                          <th>JENIS KELAMIN</th>
-                          <th>TEMPAT TANGGAL LAHIR</th>
-                          <th>GOLONGAN</th>
-                          <th>NAMA JABATAN</th>
-                          <th>NAMA SATKER</th>
-                          <th>TANGGAL MULAI KONTRAK</th>
-                          <th>TANGGAL BERAKHIR KONTRAK</th>
-                          <th>SURAT PERSETUJUAN</th>
-                          <th>PERJANJIAN KERJA</th>
-                        </tr>
-                      </thead>
-                      <tbody id="tabelHasilCetak">
-                        <tr>
-                          <td colspan="12" class="text-center">Silakan pilih filter atau ketik pencarian.</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-              </div>
-
-              <!-- TAB 5: UPLOAD DOKUMEN MASSAL PERJANJIAN KERJA -->
-              <div class="tab-pane fade" id="batchUpload" role="tabpanel">
-                <h5 class="mb-3 text-primary fw-bold">Upload Dokumen Massal Perjanjian Kerja (Multi-Select)</h5>
-                <p class="text-muted">Ketik atau pilih Satuan Kerja dari database, lalu pilih banyak file PDF sekaligus.</p>
-                
-                <div class="alert alert-warning p-3 mb-3" style="font-size: 13px;">
-                  📌 <b>Aturan & Panduan:</b><br>
-                  - Ketik atau pilih Satuan Kerja yang valid.<br>
-                  - Format nama file wajib: <b>NIP_NamaPanggilan.pdf</b> (Contoh: <code>199004052026011001_Toni.pdf</code>)<br>
-                  - <b>Maksimal upload adalah 50 file PDF per sekali proses</b>.<br>
-                  - Anda bisa menekan tombol <b>Ctrl</b> atau <b>Shift</b> saat memilih file.
-                </div>
-
-                <form id="pdfBatchForm" onsubmit="handlePdfBatchSubmit(event)">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Filter Satuan Kerja (Satker) - Ketik atau Pilih</label>
-                    <input class="form-control" list="satkerOptionsBatch" id="selectSatkerBatch" placeholder="Ketik atau pilih Satker..." required>
-                    <datalist id="satkerOptionsBatch"></datalist>
-                  </div>
-
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">Pilih Banyak File PDF (.pdf) - Maks. 50 File</label>
-                    <input type="file" class="form-control" id="batchPdfFiles" accept=".pdf" multiple required>
-                  </div>
-
-                  <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" id="pdfBatchSubmitBtn">Proses Upload & Validasi Satker</button>
-                </form>
-                <div id="pdfBatchAlertBox" class="mt-3"></div>
-              </div>
-
-              <!-- TAB 6: HELPDESK & BANTUAN + PANEL ADMIN + TOMBOL INTERAKTIF FAQ & CHAT -->
-              <div class="tab-pane fade" id="helpdeskArea" role="tabpanel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h5 class="mb-0 text-info fw-bold">🛟 Pusat Bantuan & Layanan Helpdesk</h5>
-                  <button class="btn btn-sm btn-dark fw-bold" onclick="toggleAdminPanel()">🛠️ Buka / Tutup Panel Admin Response</button>
-                </div>
-                <p class="text-muted mb-3" style="font-size: 13px;">Klik tombol interaktif di bawah untuk membuka Panduan FAQ atau Live Chat Asisten.</p>
-
-                <!-- PANEL ADMIN RESPONSE DENGAN PROTEKSI PASSWORD -->
-                <div id="adminPanel" class="card border-danger shadow-sm mb-4 d-none">
-                  <div class="card-header bg-danger text-white fw-bold d-flex justify-content-between align-items-center" style="font-size: 13px;">
-                    <span>🛠️ Panel Admin: Kelola & Respon Semua Tiket</span>
-                    <button class="btn btn-sm btn-light py-0 px-2" style="font-size: 11px;" onclick="loadAdminTickets()">🔄 Muat Ulang Tiket</button>
-                  </div>
-                  <div class="card-body bg-white p-3">
-                    <div class="table-responsive">
-                      <table class="table table-bordered table-sm align-middle" style="font-size: 11px;">
-                        <thead class="table-dark text-center">
-                          <tr>
-                            <th>WAKTU</th>
-                            <th>PELAPOR / KATEGORI</th>
-                            <th>PESAN KENDALA</th>
-                            <th>STATUS</th>
-                            <th>BALASAN ADMIN</th>
-                            <th>AKSI</th>
-                          </tr>
-                        </thead>
-                        <tbody id="adminTicketTable">
-                          <tr><td colspan="6" class="text-center">Memuat tiket...</td></tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- TOMBOL INTERAKTIF SIMBOL/LOGO FAQ & LIVE CHAT -->
-                <div class="row g-2 mb-3">
-                  <div class="col-md-6">
-                    <button type="button" class="btn btn-outline-primary w-100 py-2 fw-bold help-action-btn d-flex align-items-center justify-content-center" onclick="toggleFaqSection()">
-                      <span class="fs-5 me-2">❓</span> Buka / Tutup Panduan FAQ & Tanya Jawab
-                    </button>
-                  </div>
-                  <div class="col-md-6">
-                    <button type="button" class="btn btn-outline-success w-100 py-2 fw-bold help-action-btn d-flex align-items-center justify-content-center" onclick="toggleChatSection()">
-                      <span class="fs-5 me-2">💬</span> Buka / Tutup Live Chat Asisten
-                    </button>
-                  </div>
-                </div>
-
-                <!-- KOTAK FAQ (TERSEMBUNYI SECARA DEFAULT) -->
-                <div id="faqSection" class="card shadow-sm mb-3 d-none border-primary">
-                  <div class="card-header bg-primary text-white py-2 fw-bold" style="font-size: 13px;">📌 FAQ & Panduan Lengkap Aplikasi</div>
-                  <div class="card-body p-2" style="max-height: 250px; overflow-y: auto;">
-                    <div class="accordion accordion-flush" id="faqAccordion">
-                      
-                      <div class="accordion-item">
-                        <h2 class="accordion-header" id="headingOne">
-                          <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" style="font-size: 12px;">
-                            1. Apa fungsi utama dari aplikasi ini?
-                          </button>
-                        </h2>
-                        <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                          <div class="accordion-body py-2 text-muted" style="font-size: 11px;">
-                            Aplikasi ini dirancang untuk mengelola data pegawai Pemerintah dengan Perjanjian Kerja (PPPK) Paruh Waktu di lingkungan Kementerian Sosial, mulai dari input data satuan, import data massal dari Excel, pengunggahan dokumen pendukung (Surat Persetujuan dan Perjanjian Kerja) secara otomatis, hingga pencarian dan pencetakan daftar nominatif per Satuan Kerja.
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="accordion-item">
-                        <h2 class="accordion-header" id="headingTwo">
-                          <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" style="font-size: 12px;">
-                            2. Apa saja batas waktu penting yang perlu diperhatikan?
-                          </button>
-                        </h2>
-                        <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                          <div class="accordion-body py-2 text-muted" style="font-size: 11px;">
-                            Batas akhir pengusulan dan pengisian data adalah tanggal <b>30 September 2026</b>. Pastikan seluruh kelengkapan data dan dokumen terunggah sebelum batas waktu tersebut.
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="accordion-item">
-                        <h2 class="accordion-header" id="headingThree">
-                          <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" style="font-size: 12px;">
-                            3. Bagaimana format nama file upload massal Perjanjian Kerja?
-                          </button>
-                        </h2>
-                        <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                          <div class="accordion-body py-2 text-muted" style="font-size: 11px;">
-                            Format nama file wajib: <b>NIP_NamaPanggilan.pdf</b> (Contoh: <code>199004052026011001_Toni.pdf</code>). Maksimal upload adalah 50 file PDF per sekali proses.
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="accordion-item">
-                        <h2 class="accordion-header" id="headingFour">
-                          <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" style="font-size: 12px;">
-                            4. Bagaimana cara mengunggah Surat Persetujuan PDF?
-                          </button>
-                        </h2>
-                        <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                          <div class="accordion-body py-2 text-muted" style="font-size: 11px;">
-                            Masuk ke tab <b>Upload Surat Persetujuan</b>, ketik atau pilih Satuan Kerja dari database, lalu pilih file PDF surat persetujuannya. Sistem akan otomatis menautkan dokumen tersebut ke seluruh pegawai pada Satuan Kerja terpilih.
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="accordion-item">
-                        <h2 class="accordion-header" id="headingFive">
-                          <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" style="font-size: 12px;">
-                            5. Bagaimana jika saya mengalami kendala atau error pada aplikasi?
-                          </button>
-                        </h2>
-                        <div id="collapseFive" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                          <div class="accordion-body py-2 text-muted" style="font-size: 11px;">
-                            Anda dapat menggunakan fitur <b>Live Chat Asisten</b> di bawah atau mengirimkan tiket laporan melalui formulir <b>Buat & Riwayat Tiket Pelaporan</b> di sebelah kanan. Tim helpdesk akan segera memeriksa dan memberikan respon.
-                          </div>
-                        </div>
-                      </div>
-
-                    </div>
-                  </div>
-                </div>
-
-                <!-- KOTAK LIVE CHAT (TERSEMBUNYI SECARA DEFAULT) -->
-                <div id="chatSection" class="card shadow-sm mb-3 d-none border-success">
-                  <div class="card-header bg-success text-white py-2 fw-bold d-flex justify-content-between align-items-center" style="font-size: 13px;">
-                    <span>💬 Live Chat Asisten</span>
-                    <span class="badge bg-light text-success" style="font-size: 9px;">Online</span>
-                  </div>
-                  <div class="card-body p-2">
-                    <div class="chat-box mb-2" id="chatContainer">
-                      <div class="chat-bubble chat-admin">Halo! Ada kendala apa hari ini? Silakan tanyakan di sini.</div>
-                    </div>
-                    <div class="input-group input-group-sm">
-                      <input type="text" class="form-control" id="chatInput" placeholder="Ketik pertanyaan...">
-                      <button class="btn btn-success text-white fw-bold px-3" type="button" onclick="sendChat()">Kirim</button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- FORMULIR & HISTORI TIKET PELAPORAN -->
-                <div class="row g-3">
-                  <div class="col-md-12">
-                    <div class="card shadow-sm mb-3">
-                      <div class="card-header bg-primary text-white py-2 fw-bold" style="font-size: 13px;">🎫 Buat & Riwayat Tiket Pelaporan Kendala</div>
-                      <div class="card-body p-3">
-                        <form id="ticketForm" onsubmit="handleTicketSubmit(event)">
-                          <div class="row">
-                            <div class="col-md-4 mb-2">
-                              <label class="form-label fw-bold mb-1" style="font-size: 11px;">Nama Pelapor / Asal Satker</label>
-                              <input type="text" class="form-control form-control-sm" id="ticketNama" placeholder="Nama & Asal Satker..." required oninput="simpanNamaPelapor(this.value)">
-                            </div>
-                            <div class="col-md-4 mb-2">
-                              <label class="form-label fw-bold mb-1" style="font-size: 11px;">Kategori Kendala</label>
-                              <select class="form-select form-select-sm" id="ticketKategori">
-                                <option value="Upload PDF Gagal">Upload PDF Gagal / Ditolak</option>
-                                <option value="Data Pegawai Tidak Sesuai">Data Pegawai Tidak Sesuai</option>
-                                <option value="Error Saat Import Excel">Error Saat Import Excel</option>
-                                <option value="Lainnya">Lainnya</option>
-                              </select>
-                            </div>
-                            <div class="col-md-4 mb-2">
-                              <label class="form-label fw-bold mb-1" style="font-size: 11px;">Aksi Cepat</label>
-                              <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold" id="ticketBtn">Kirim Tiket Laporan</button>
-                            </div>
-                          </div>
-                          <div class="mb-2">
-                            <label class="form-label fw-bold mb-1" style="font-size: 11px;">Detail Keterangan</label>
-                            <textarea class="form-control form-control-sm" id="ticketPesan" rows="2" placeholder="Jelaskan kendala secara detail..." required></textarea>
-                          </div>
-                        </form>
-                        <div id="ticketAlertBox" class="mt-2" style="font-size: 11px;"></div>
-
-                        <hr class="my-2">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                          <span class="fw-bold text-secondary" style="font-size: 11px;">📋 Histori Laporan Anda</span>
-                          <div>
-                            <button class="btn btn-sm btn-outline-primary py-0 px-1 me-1" style="font-size: 10px;" onclick="bukaCekHistoryModal()">🔍 Cek Histori</button>
-                            <button class="btn btn-sm btn-outline-secondary py-0 px-1" style="font-size: 10px;" onclick="clearTicketForm()">🔄 Refresh</button>
-                          </div>
-                        </div>
-                        <div class="border rounded p-1 bg-white" style="max-height: 140px; overflow-y: auto;">
-                          <div id="ticketHistoryList" style="font-size: 11px;">
-                            <p class="text-muted text-center my-1">Masukkan nama untuk melihat histori.</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom p-3">
+        <div class="announcement-bar">
+          <div class="running-text">
+            ⚠️ <b>Penting!</b> Batas Akhir Pengusulan dan Pengisian pada tanggal 30 September 2026 
+            <span id="countdownDisplay" class="countdown-badge">Memuat Waktu...</span> ⏰
           </div>
         </div>
+
+        <h4 class="mb-3 text-dark fw-bold">Manajemen Data Pegawai & Kontrak</h4>
+        <ul class="nav nav-pills custom-tabs" id="myTab" role="tablist">
+          <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dashboardArea" onclick="loadDashboardData()">📊 Dashboard Monitoring</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#single" onclick="loadSatkerDatalists()">Input Satuan</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#import">Import Excel</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pdfUpload" onclick="loadSatkerDatalists()">Upload Surat Persetujuan</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#printArea" onclick="loadSatkerDatalists(); filterDataCetak();">Cetak & Filter</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#batchUpload" onclick="loadSatkerDatalists()">Upload Dokumen Massal Perjanjian Kerja</button></li>
+          <li class="nav-item"><button class="nav-link text-info fw-bold" data-bs-toggle="tab" data-bs-target="#helpdeskArea" onclick="loadTicketHistory()">🛟 Helpdesk & AI</button></li>
+        </ul>
       </div>
-    </div>
-  </div>
+      
+      <div class="card-body p-4">
+        <div class="tab-content">
+          
+          <!-- TAB 0: DASHBOARD MONITORING BARU -->
+          <div class="tab-pane fade show active" id="dashboardArea" role="tabpanel">
+            <h5 class="fw-bold mb-3 text-primary">📊 Dashboard Monitoring & Statistik</h5>
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                <div class="p-3 stat-card border-primary">
+                  <span class="text-muted small fw-bold">TOTAL TARGET NIP</span>
+                  <h3 class="fw-bold mt-1" id="statTarget">0</h3>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="p-3 stat-card border-success">
+                  <span class="text-muted small fw-bold">SUDAH INPUT NIP</span>
+                  <h3 class="fw-bold mt-1 text-success" id="statInput">0</h3>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="p-3 stat-card border-warning">
+                  <span class="text-muted small fw-bold">SURAT PERSETUJUAN UPLOAD</span>
+                  <h3 class="fw-bold mt-1 text-warning" id="statSurat">0</h3>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="p-3 stat-card border-danger">
+                  <span class="text-muted small fw-bold">PERJANJIAN KERJA UPLOAD</span>
+                  <h3 class="fw-bold mt-1 text-danger" id="statKontrak">0</h3>
+                </div>
+              </div>
+            </div>
 
-  <!-- Modal Cek Histori Berdasarkan Dropdown LocalStorage -->
-  <div class="modal fade" id="historyModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-      <div class="modal-content">
-        <div class="modal-header py-2 bg-light">
-          <h6 class="modal-title fw-bold" style="font-size: 13px;">Pilih Nama Pelapor Tersimpan</h6>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body p-3">
-          <div class="mb-2">
-            <select class="form-select form-select-sm" id="selectHistoryUser">
-              <option value="">-- Pilih Nama dari Perangkat Ini --</option>
-            </select>
+            <div class="card p-3 shadow-sm">
+              <h6 class="fw-bold mb-3">Rincian Progres Per Satuan Kerja</h6>
+              <div class="table-responsive">
+                <table class="table table-bordered table-sm align-middle" style="font-size: 12px;">
+                  <thead class="table-dark text-center">
+                    <tr><th>Satuan Kerja</th><th>Target NIP</th><th>Sudah Input</th><th>Surat Persetujuan</th><th>Perjanjian Kerja</th></tr>
+                  </thead>
+                  <tbody id="dashboardSatkerTable">
+                    <tr><td colspan="5" class="text-center">Memuat data dashboard...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
-          <button type="button" class="btn btn-primary btn-sm w-100 fw-bold" onclick="pilihUserDariDropdown()">Tampilkan Histori</button>
+
+          <!-- TAB 1: INPUT SATUAN (DENGAN MODE EDIT OTOMATIS) -->
+          <div class="tab-pane fade" id="single" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="text-primary fw-bold mb-0" id="formTitle">Formulir Input Data Pegawai</h5>
+              <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" onclick="resetFormManual()">🔄 Bersihkan Form</button>
+            </div>
+            <div id="modeEditAlert" class="alert alert-info py-2 mb-3 d-none" style="font-size: 13px;">ℹ️ NIP sudah terdaftar[cite: 1]. Form beralih ke <b>Mode Edit (Update Data)</b>[cite: 1].</div>
+            
+            <form id="pegawaiForm" onsubmit="handleFormSubmit(event)">
+              <div class="mb-3">
+                <label class="form-label fw-bold">NI PPPK / NIP (Ketik NIP untuk Cek Mode Edit)</label>
+                <input type="text" class="form-control" id="niPppk" list="niOptions" placeholder="Ketik NIP..." oninput="cekModeEditNip(this.value)" required>
+                <datalist id="niOptions"></datalist>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Nama Pegawai</label>
+                <input type="text" class="form-control" id="namaPegawai" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Jenis Kelamin</label>
+                <input type="text" class="form-control" id="jenisKelamin" placeholder="Contoh: Laki-Laki / Perempuan" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Tempat, Tanggal Lahir</label>
+                <input type="text" class="form-control" id="ttl" placeholder="Contoh: Jakarta, 22 September 1996" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Golongan</label>
+                <input type="text" class="form-control" id="golongan" placeholder="Contoh: III/a atau 0" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Nama Jabatan</label>
+                <input type="text" class="form-control" id="namaJabatan" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Nama Satuan Kerja (Satker)</label>
+                <input class="form-control" list="satkerOptionsInput" id="namaSatker" required>
+                <datalist id="satkerOptionsInput"></datalist>
+              </div>
+              <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" id="submitBtn">Simpan Data Baru</button>
+            </form>
+            <div id="alertBox" class="mt-3"></div>
+          </div>
+
+          <!-- TAB 2: IMPORT EXCEL -->
+          <div class="tab-pane fade" id="import" role="tabpanel">
+            <h5 class="mb-3 text-success fw-bold">Import Data Massal Excel (.xlsx)</h5>
+            <input type="file" class="form-control mb-3" id="excelFile" accept=".xlsx, .xls, .csv">
+            <button type="button" class="btn btn-success w-100 fw-bold" id="importBtn" onclick="handleImportExcel()">Proses Import Data</button>
+            <div id="importAlertBox" class="mt-3"></div>
+          </div>
+
+          <!-- TAB 3: UPLOAD SURAT PERSETUJUAN -->
+          <div class="tab-pane fade" id="pdfUpload" role="tabpanel">
+            <h5 class="mb-3 text-danger fw-bold">Upload Dokumen Surat Persetujuan (PDF) Per Satker</h5>
+            <form id="pdfForm" onsubmit="handlePdfSubmit(event)">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Satuan Kerja</label>
+                <input class="form-control" list="satkerOptionsPdf" id="selectSatkerPdf" required>
+                <datalist id="satkerOptionsPdf"></datalist>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">File PDF</label>
+                <input type="file" class="form-control" id="pdfFile" accept=".pdf" required>
+              </div>
+              <button type="submit" class="btn btn-danger w-100 fw-bold" id="pdfSubmitBtn">Upload & Tautkan</button>
+            </form>
+            <div id="pdfAlertBox" class="mt-3"></div>
+          </div>
+
+          <!-- TAB 4: CETAK & FILTER (DENGAN EXPORT EXCEL) -->
+          <div class="tab-pane fade" id="printArea" role="tabpanel">
+            <h5 class="mb-3 fw-bold">Pencarian, Filter, Cetak, & Export Excel</h5>
+            <div class="row g-3 mb-3">
+              <div class="col-md-4">
+                <input class="form-control" list="satkerOptionsCetak" id="filterSatker" placeholder="Filter Satker..." oninput="filterDataCetak()">
+                <datalist id="satkerOptionsCetak"></datalist>
+              </div>
+              <div class="col-md-4">
+                <input type="text" class="form-control" id="filterKeyword" placeholder="Cari Nama / NIP..." onkeyup="filterDataCetak()">
+              </div>
+              <div class="col-md-4 d-flex gap-2">
+                <button type="button" class="btn btn-secondary w-50 fw-bold" onclick="window.print()">🖨️ Cetak PDF</button>
+                <button type="button" class="btn btn-success w-50 fw-bold" onclick="exportTableToExcel()">📊 Export Excel</button>
+              </div>
+            </div>
+
+            <div id="printableArea">
+              <h5 class="text-center fw-bold" id="judulCetak">Daftar Nominatif Pegawai</h5>
+              <div class="table-responsive">
+                <table class="table table-bordered table-striped align-middle" style="font-size: 11px;" id="tabelNominatif">
+                  <thead class="table-dark text-center">
+                    <tr>
+                      <th>NO.</th><th>NI PPPK / NIP</th><th>NAMA PEGAWAI</th><th>JK</th>
+                      <th>TTL</th><th>GOL</th><th>JABATAN</th><th>SATKER</th>
+                      <th>MULAI KONTRAK</th><th>AKHIR KONTRAK</th>
+                      <th class="col-dok">SURAT PERSETUJUAN</th><th class="col-dok">PERJANJIAN KERJA</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabelHasilCetak"><tr><td colspan="12" class="text-center">Memuat...</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 5: UPLOAD MASSAL PERJANJIAN KERJA -->
+          <div class="tab-pane fade" id="batchUpload" role="tabpanel">
+            <h5 class="mb-3 text-primary fw-bold">Upload Dokumen Massal Perjanjian Kerja</h5>
+            <form id="pdfBatchForm" onsubmit="handlePdfBatchSubmit(event)">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Satuan Kerja</label>
+                <input class="form-control" list="satkerOptionsBatch" id="selectSatkerBatch" required>
+                <datalist id="satkerOptionsBatch"></datalist>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Pilih Banyak File PDF (Maks 50 File)</label>
+                <input type="file" class="form-control" id="batchPdfFiles" accept=".pdf" multiple required>
+              </div>
+              <button type="submit" class="btn btn-primary w-100 fw-bold" id="pdfBatchSubmitBtn">Proses Upload Massal</button>
+            </form>
+            <div id="pdfBatchAlertBox" class="mt-3"></div>
+          </div>
+
+          <!-- TAB 6: HELPDESK & AI CHAT -->
+          <div class="tab-pane fade" id="helpdeskArea" role="tabpanel">
+            <h5 class="text-info fw-bold mb-3">🛟 Pusat Bantuan & Live Chat Asisten AI</h5>
+            <div class="card p-3 shadow-sm mb-3">
+              <div class="chat-box mb-2" id="chatContainer">
+                <div class="chat-bubble chat-admin">Halo! Saya Asisten AI. Anda bisa bertanya seputar alur aplikasi atau mengetik NIP/Nama untuk mencari data pegawai secara instan[cite: 2].</div>
+              </div>
+              <div class="input-group">
+                <input type="text" class="form-control" id="chatInput" placeholder="Ketik pertanyaan atau NIP/Nama pegawai...">
+                <button class="btn btn-success fw-bold px-4" type="button" onclick="sendChatAI()">Kirim</button>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    // ==========================================
-    // SKRIP PEMBUNGKUS (FETCHER) UNTUK GITHUB PAGES
-    // ==========================================
     var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzvei70fI2Os5e5kxu3_ZEobhDunWibdWVEfOXDNaHgkMPPBles46L_IelNUOwPYcsp/exec";
+    var databasePegawaiCache = [];
+
+    function callServer(action, payload, cb, errCb) {
+      fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: action, payload: payload }) })
+        .then(res => res.json())
+        .then(res => { if (res.status === "success") cb(res.data); else if (errCb) errCb(new Error(res.message)); else alert(res.message); })
+        .catch(err => { if (errCb) errCb(err); else alert(err.message); });
+    }
 
     var google = {
       script: {
         run: {
-          withSuccessHandler: function(successCallback) {
-            this.success = successCallback;
-            return this;
-          },
-          withFailureHandler: function(failureCallback) {
-            this.failure = failureCallback;
-            return this;
-          },
-          getAllDataPegawai: function() { callServer("getAllDataPegawai", null, this.success, this.failure); },
-          getDaftarSatker: function() { callServer("getDaftarSatker", null, this.success, this.failure); },
-          getRingkasanSatker: function() { callServer("getRingkasanSatker", null, this.success, this.failure); },
-          cariDataPegawai: function(s, k) { callServer("cariDataPegawai", {filterSatker: s, keyword: k}, this.success, this.failure); },
-          simpanData: function(d) { callServer("simpanData", d, this.success, this.failure); },
-          importDataExcel: function(d) { callServer("importDataExcel", d, this.success, this.failure); },
-          uploadPdfBySatker: function(d) { callServer("uploadPdfBySatker", d, this.success, this.failure); },
-          uploadPdfBatchWithSatker: function(d) { callServer("uploadPdfBatchWithSatker", d, this.success, this.failure); },
-          submitTicket: function(d) { callServer("submitTicket", d, this.success, this.failure); },
-          getTicketHistory: function() { callServer("getTicketHistory", null, this.success, this.failure); },
-          adminUpdateTicket: function(d) { callServer("adminUpdateTicket", d, this.success, this.failure); }
+          withSuccessHandler: function(cb) { this.cb = cb; return this; },
+          withFailureHandler: function(errCb) { this.errCb = errCb; return this; },
+          getAllDataPegawai: function() { callServer("getAllDataPegawai", null, this.cb, this.errCb); },
+          getDaftarSatker: function() { callServer("getDaftarSatker", null, this.cb, this.errCb); },
+          getDashboardSummary: function() { callServer("getDashboardSummary", null, this.cb, this.errCb); },
+          cariDataPegawai: function(s, k) { callServer("cariDataPegawai", {filterSatker: s, keyword: k}, this.cb, this.errCb); },
+          simpanData: function(d) { callServer("simpanData", d, this.cb, this.errCb); },
+          importDataExcel: function(d) { callServer("importDataExcel", d, this.cb, this.errCb); },
+          uploadPdfBySatker: function(d) { callServer("uploadPdfBySatker", d, this.cb, this.errCb); },
+          uploadPdfBatchWithSatker: function(d) { callServer("uploadPdfBatchWithSatker", d, this.cb, this.errCb); },
+          submitTicket: function(d) { callServer("submitTicket", d, this.cb, this.errCb); },
+          getTicketHistory: function() { callServer("getTicketHistory", null, this.cb, this.errCb); }
         }
       }
     };
 
-    function callServer(action, payload, successCallback, failureCallback) {
-      fetch(SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: action, payload: payload })
-      })
-      .then(res => res.json())
-      .then(res => {
-        if (res.status === "success") {
-          if (successCallback) successCallback(res.data);
-        } else {
-          if (failureCallback) failureCallback(new Error(res.message));
-          else alert("Error: " + res.message);
-        }
-      })
-      .catch(err => {
-        if (failureCallback) failureCallback(err);
-        else alert("Koneksi server gagal: " + err.message);
-      });
-    }
-
-    // ==========================================
-    // LOGIKA UTAMA APLIKASI
-    // ==========================================
-    var globalSatkerSummary = { sudah: [], belum: [] };
-    var databasePegawaiCache = [];
-
     function initApp() {
       loadSatkerDatalists();
-      loadDatabasePegawaiForInput();
-      loadDashboard();
-      filterDataCetak();
+      loadDatabaseCache();
+      loadDashboardData();
       startCountdown();
-      muatNamaPelaporTersimpan();
     }
 
-    function toggleFaqSection() {
-      var sec = document.getElementById('faqSection');
-      sec.classList.toggle('d-none');
-    }
-
-    function toggleChatSection() {
-      var sec = document.getElementById('chatSection');
-      sec.classList.toggle('d-none');
-    }
-
-    function startCountdown() {
-      var countDownDate = new Date("Sep 30, 2026 23:59:59").getTime();
-
-      var x = setInterval(function() {
-        var now = new Date().getTime();
-        var distance = countDownDate - now;
-
-        var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-        var elem = document.getElementById("countdownDisplay");
-        if (elem) {
-          if (distance < 0) {
-            clearInterval(x);
-            elem.innerHTML = "Waktu Pengusulan Telah Habis!";
-          } else {
-            elem.innerHTML = days + " Hari " + hours + " Jam " + minutes + " Mnt " + seconds + " Dtk lagi";
+    function loadDatabaseCache() {
+      google.script.run.withSuccessHandler(function(list) {
+        databasePegawaiCache = list;
+        var datalist = document.getElementById('niOptions');
+        datalist.innerHTML = "";
+        list.forEach(item => {
+          if (item.ni) {
+            var opt = document.createElement('option');
+            opt.value = item.ni;
+            opt.label = item.nama;
+            datalist.appendChild(opt);
           }
-        }
-      }, 1000);
+        });
+      }).getAllDataPegawai();
     }
 
-    function loadDatabasePegawaiForInput() {
-      google.script.run
-        .withSuccessHandler(function(dataList) {
-          databasePegawaiCache = dataList;
-          var niOptions = document.getElementById('niOptions');
-          var namaOptions = document.getElementById('namaOptions');
-          
-          niOptions.innerHTML = "";
-          namaOptions.innerHTML = "";
-
-          dataList.forEach(function(item) {
-            if (item.ni) {
-              var optNi = document.createElement('option');
-              optNi.value = item.ni;
-              optNi.label = item.nama;
-              niOptions.appendChild(optNi);
-            }
-            if (item.nama) {
-              var optNama = document.createElement('option');
-              optNama.value = item.nama;
-              optNama.label = item.ni;
-              namaOptions.appendChild(optNama);
-            }
-          });
-
-          var statusBox = document.getElementById('loadingStatus');
-          if (statusBox) {
-            statusBox.className = "alert alert-success py-2 mb-3";
-            statusBox.innerHTML = "✅ Database sheet config (" + dataList.length + " data pegawai) berhasil dimuat.";
-            setTimeout(function() { statusBox.style.display = 'none'; }, 4000);
-          }
-        })
-        .withFailureHandler(function(err) {
-          var statusBox = document.getElementById('loadingStatus');
-          if (statusBox) {
-            statusBox.className = "alert alert-danger py-2 mb-3";
-            statusBox.innerHTML = "❌ Gagal memuat database config: " + err.message;
-          }
-        })
-        .getAllDataPegawai();
-    }
-
-    function isiOtomatisOlehNi(niVal) {
+    function cekModeEditNip(niVal) {
       if (!niVal) return;
-      var cleanVal = niVal.trim().toLowerCase();
-      var found = databasePegawaiCache.find(function(item) {
-        return item.ni.toLowerCase() === cleanVal || item.ni.toLowerCase().indexOf(cleanVal) !== -1;
-      });
-      if (found) {
-        isiFormPegawai(found);
-      }
-    }
+      var clean = niVal.trim().toLowerCase();
+      var found = databasePegawaiCache.find(item => item.ni.toLowerCase() === clean);
+      var alertBox = document.getElementById('modeEditAlert');
+      var submitBtn = document.getElementById('submitBtn');
+      var formTitle = document.getElementById('formTitle');
 
-    function isiOtomatisOlehNama(namaVal) {
-      if (!namaVal) return;
-      var cleanVal = namaVal.trim().toLowerCase();
-      var found = databasePegawaiCache.find(function(item) {
-        return item.nama.toLowerCase() === cleanVal || item.nama.toLowerCase().indexOf(cleanVal) !== -1;
-      });
-      if (found) {
-        isiFormPegawai(found);
+      if (found && found.isInputed) {
+        alertBox.classList.remove('d-none');
+        formTitle.innerText = "Formulir Edit Data Pegawai (Mode Pembaruan)";
+        submitBtn.innerText = "Perbarui Data";
+        submitBtn.className = "btn btn-warning w-100 py-2 fw-bold text-dark";
+        
+        document.getElementById('namaPegawai').value = found.nama;
+        document.getElementById('jenisKelamin').value = found.jk;
+        document.getElementById('ttl').value = found.ttl;
+        document.getElementById('golongan').value = found.gol;
+        document.getElementById('namaJabatan').value = found.jabatan;
+        document.getElementById('namaSatker').value = found.satker;
+      } else {
+        alertBox.classList.add('d-none');
+        formTitle.innerText = "Formulir Input Data Pegawai";
+        submitBtn.innerText = "Simpan Data Baru";
+        submitBtn.className = "btn btn-primary w-100 py-2 fw-bold";
       }
-    }
-
-    function isiFormPegawai(data) {
-      document.getElementById('niPppk').value = data.ni || "";
-      document.getElementById('namaPegawai').value = data.nama || "";
-      document.getElementById('jenisKelamin').value = data.jk || "";
-      document.getElementById('ttl').value = data.ttl || "";
-      document.getElementById('golongan').value = data.gol || "";
-      document.getElementById('namaJabatan').value = data.jabatan || "";
-      document.getElementById('namaSatker').value = data.satker || "";
-      document.getElementById('tglMulai').value = "2026-11-01";
-      document.getElementById('tglAkhir').value = "2027-10-31";
     }
 
     function resetFormManual() {
       document.getElementById('pegawaiForm').reset();
-      document.getElementById('tglMulai').value = "2026-11-01";
-      document.getElementById('tglAkhir').value = "2027-10-31";
+      document.getElementById('modeEditAlert').classList.add('d-none');
+      document.getElementById('formTitle').innerText = "Formulir Input Data Pegawai";
+      document.getElementById('submitBtn').innerText = "Simpan Data Baru";
+      document.getElementById('submitBtn').className = "btn btn-primary w-100 py-2 fw-bold";
       document.getElementById('alertBox').innerHTML = "";
     }
 
-    function loadDashboard() {
-      google.script.run
-        .withSuccessHandler(function(summary) {
-          globalSatkerSummary = summary;
-          document.getElementById('countSudah').innerText = summary.sudah.length + " Satuan Kerja";
-          document.getElementById('countBelum').innerText = summary.belum.length + " Satuan Kerja";
-        })
-        .getRingkasanSatker();
+    function loadDashboardData() {
+      google.script.run.withSuccessHandler(function(summary) {
+        document.getElementById('statTarget').innerText = summary.totalTarget;
+        document.getElementById('statInput').innerText = summary.sudahInput;
+        document.getElementById('statSurat').innerText = summary.suratUpload;
+        document.getElementById('statKontrak').innerText = summary.kontrakUpload;
+
+        var tbody = document.getElementById('dashboardSatkerTable');
+        tbody.innerHTML = "";
+        for (var satker in summary.satkerDetail) {
+          var d = summary.satkerDetail[satker];
+          tbody.innerHTML += `<tr>
+            <td><b>${satker}</b></td>
+            <td class="text-center">${d.target}</td>
+            <td class="text-center">${d.input}</td>
+            <td class="text-center">${d.surat} / ${d.target}</td>
+            <td class="text-center">${d.kontrak} / ${d.target}</td>
+          </tr>`;
+        }
+      }).getDashboardSummary();
     }
 
-    function filterSatkerByStatus(status) {
-      var listSatker = status === 'sudah' ? globalSatkerSummary.sudah : globalSatkerSummary.belum;
-      if (!listSatker || listSatker.length === 0) {
-        alert("Data ringkasan masih dimuat atau tidak ada Satuan Kerja dalam kategori ini.");
-        loadDashboard();
-        return;
-      }
-      document.getElementById('filterSatker').value = listSatker[0];
-      filterDataCetak();
+    function loadSatkerDatalists() {
+      google.script.run.withSuccessHandler(function(list) {
+        ['satkerOptionsInput', 'satkerOptionsPdf', 'satkerOptionsCetak', 'satkerOptionsBatch'].forEach(id => {
+          var el = document.getElementById(id);
+          if (el) {
+            el.innerHTML = "";
+            list.forEach(s => { var opt = document.createElement('option'); opt.value = s; el.appendChild(opt); });
+          }
+        });
+      }).getDaftarSatker();
+    }
+
+    function filterDataCetak() {
+      var satker = document.getElementById('filterSatker').value.trim();
+      var keyword = document.getElementById('filterKeyword').value;
+      google.script.run.withSuccessHandler(function(data) {
+        var tbody = document.getElementById('tabelHasilCetak');
+        tbody.innerHTML = "";
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="12" class="text-center">Tidak ada data.</td></tr>';
+          return;
+        }
+        data.forEach((item, idx) => {
+          tbody.innerHTML += `<tr>
+            <td class="text-center">${idx + 1}</td>
+            <td><b>${item.ni}</b></td>
+            <td>${item.nama}</td>
+            <td class="text-center">${item.jk}</td>
+            <td>${item.ttl}</td>
+            <td class="text-center">${item.gol}</td>
+            <td>${item.jabatan}</td>
+            <td>${item.satker}</td>
+            <td>${item.tglMulai}</td>
+            <td>${item.tglAkhir}</td>
+            <td class="text-center">${item.linkPersetujuan ? '<a href="'+item.linkPersetujuan+'" target="_blank">Lihat PDF</a>' : 'Belum ada'}</td>
+            <td class="text-center">${item.linkPerjanjian ? '<a href="'+item.linkPerjanjian+'" target="_blank">Lihat PDF</a>' : 'Belum ada'}</td>
+          </tr>`;
+        });
+      }).cariDataPegawai(satker, keyword);
+    }
+
+    function exportTableToExcel() {
+      var table = document.getElementById('tabelNominatif').cloneNode(true);
+      var rows = table.querySelectorAll('tr');
+      rows.forEach(row => {
+        var cells = row.querySelectorAll('th, td');
+        if (cells.length >= 12) {
+          cells[11].remove();
+          cells[10].remove();
+        }
+      });
+      var wb = XLSX.utils.table_to_book(table, { raw: true });
+      XLSX.writeFile(wb, "Rekap_Data_Pegawai.xlsx");
     }
 
     function handleFormSubmit(event) {
       event.preventDefault();
-      var btn = document.getElementById('submitBtn');
-      btn.disabled = true;
-      btn.innerText = "Menyimpan...";
-
       var formData = {
         niPppk: document.getElementById('niPppk').value,
         namaPegawai: document.getElementById('namaPegawai').value,
@@ -819,485 +419,112 @@
         ttl: document.getElementById('ttl').value,
         golongan: document.getElementById('golongan').value,
         namaJabatan: document.getElementById('namaJabatan').value,
-        namaSatker: document.getElementById('namaSatker').value,
-        tglMulai: document.getElementById('tglMulai').value,
-        tglAkhir: document.getElementById('tglAkhir').value
+        namaSatker: document.getElementById('namaSatker').value
       };
+      google.script.run.withSuccessHandler(res => {
+        document.getElementById('alertBox').innerHTML = '<div class="alert alert-success">' + res + '</div>';
+        resetFormManual();
+        initApp();
+      }).simpanData(formData);
+    }
 
-      google.script.run
-        .withSuccessHandler(function(response) {
-          document.getElementById('alertBox').innerHTML = '<div class="alert alert-success">' + response + '</div>';
-          resetFormManual();
-          btn.disabled = false;
-          btn.innerText = "Simpan Data";
+    function handleImportExcel() {
+      var fileInput = document.getElementById('excelFile');
+      if (!fileInput.files.length) return alert("Pilih file Excel!");
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        google.script.run.withSuccessHandler(res => {
+          document.getElementById('importAlertBox').innerHTML = '<div class="alert alert-success">' + res + '</div>';
           initApp();
-        })
-        .withFailureHandler(function(error) {
-          document.getElementById('alertBox').innerHTML = '<div class="alert alert-danger">Error: ' + error.message + '</div>';
-          btn.disabled = false;
-          btn.innerText = "Simpan Data";
-        })
-        .simpanData(formData);
-    }
-
-    function loadSatkerDatalists() {
-      google.script.run
-        .withSuccessHandler(function(list) {
-          var datalistInput = document.getElementById('satkerOptionsInput');
-          var datalistPdf = document.getElementById('satkerOptionsPdf');
-          var datalistCetak = document.getElementById('satkerOptionsCetak');
-          var datalistBatch = document.getElementById('satkerOptionsBatch');
-
-          if (datalistInput) datalistInput.innerHTML = "";
-          if (datalistPdf) datalistPdf.innerHTML = "";
-          if (datalistCetak) datalistCetak.innerHTML = "";
-          if (datalistBatch) datalistBatch.innerHTML = "";
-
-          list.forEach(function(satker) {
-            var opt1 = document.createElement('option');
-            opt1.value = satker;
-            if (datalistInput) datalistInput.appendChild(opt1.cloneNode(true));
-            if (datalistPdf) datalistPdf.appendChild(opt1.cloneNode(true));
-            if (datalistCetak) datalistCetak.appendChild(opt1.cloneNode(true));
-            if (datalistBatch) datalistBatch.appendChild(opt1.cloneNode(true));
-          });
-        })
-        .getDaftarSatker();
-    }
-
-    function filterDataCetak() {
-      var satker = document.getElementById('filterSatker').value.trim();
-      var keyword = document.getElementById('filterKeyword').value;
-
-      var judulElement = document.getElementById('judulCetak');
-      if (satker === "" || satker.toLowerCase() === "-- semua satker --") {
-        judulElement.innerText = "Daftar Nominatif Pegawai Pemerintah dengan Perjanjian Kerja Paruh Waktu di Lingkungan Kementerian Sosial";
-      } else {
-        judulElement.innerText = "Daftar Nominatif Pegawai Pemerintah dengan Perjanjian Kerja Paruh Waktu di Lingkungan " + satker.toUpperCase();
-      }
-
-      google.script.run
-        .withSuccessHandler(function(data) {
-          var tbody = document.getElementById('tabelHasilCetak');
-          tbody.innerHTML = "";
-          
-          if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="12" class="text-center py-3">Tidak ada data yang cocok dengan filter.</td></tr>';
-            return;
-          }
-
-          data.forEach(function(item, index) {
-            var tr = document.createElement('tr');
-            
-            var persetujuanHtml = item.linkPersetujuan ? 
-              '<a href="' + item.linkPersetujuan + '" target="_blank" class="btn btn-sm btn-outline-danger py-0" style="font-size:10px;">Lihat PDF</a>' : 
-              '<span class="text-muted" style="font-size:10px;">Belum ada</span>';
-
-            var perjanjianHtml = item.linkPerjanjian ? 
-              '<a href="' + item.linkPerjanjian + '" target="_blank" class="btn btn-sm btn-outline-primary py-0" style="font-size:10px;">Lihat PDF</a>' : 
-              '<span class="text-muted" style="font-size:10px;">Belum ada</span>';
-            
-            tr.innerHTML = '<td class="text-center">' + (index + 1) + '</td>' +
-                           '<td><b>' + item.ni + '</b></td>' +
-                           '<td>' + item.nama + '</td>' +
-                           '<td class="text-center">' + item.jk + '</td>' +
-                           '<td>' + item.ttl + '</td>' +
-                           '<td class="text-center">' + item.gol + '</td>' +
-                           '<td>' + item.jabatan + '</td>' +
-                           '<td>' + item.satker + '</td>' +
-                           '<td>' + item.tglMulai + '</td>' +
-                           '<td>' + item.tglAkhir + '</td>' +
-                           '<td class="text-center">' + persetujuanHtml + '</td>' +
-                           '<td class="text-center">' + perjanjianHtml + '</td>';
-            tbody.appendChild(tr);
-          });
-        })
-        .cariDataPegawai(satker, keyword);
+        }).importDataExcel({ data: e.target.result.split(',')[1], fileName: fileInput.files[0].name, mimeType: fileInput.files[0].type });
+      };
+      reader.readAsDataURL(fileInput.files[0]);
     }
 
     function handlePdfSubmit(event) {
       event.preventDefault();
-      var satkerVal = document.getElementById('selectSatkerPdf').value;
-      var fileInput = document.getElementById('pdfFile');
-      var btn = document.getElementById('pdfSubmitBtn');
-
-      if (!satkerVal || fileInput.files.length === 0) {
-        alert("Pilih/ketik Satuan Kerja dan pilih file PDF terlebih dahulu!");
-        return;
-      }
-
-      var file = fileInput.files[0];
-      btn.disabled = true;
-      btn.innerText = "Mengunggah Surat Persetujuan...";
-
+      var file = document.getElementById('pdfFile').files[0];
       var reader = new FileReader();
       reader.onload = function(e) {
-        var content = e.target.result;
-        var base64Data = content.split(',')[1];
-
-        google.script.run
-          .withSuccessHandler(function(response) {
-            document.getElementById('pdfAlertBox').innerHTML = '<div class="alert alert-success">' + response + '</div>';
-            document.getElementById('pdfForm').reset();
-            btn.disabled = false;
-            btn.innerText = "Upload & Tautkan ke Satker";
-            initApp();
-          })
-          .withFailureHandler(function(error) {
-            document.getElementById('pdfAlertBox').innerHTML = '<div class="alert alert-danger">Error: ' + error.message + '</div>';
-            btn.disabled = false;
-            btn.innerText = "Upload & Tautkan ke Satker";
-          })
-          .uploadPdfBySatker({
-            satker: satkerVal,
-            fileName: file.name,
-            mimeType: file.type,
-            data: base64Data
-          });
+        google.script.run.withSuccessHandler(res => {
+          document.getElementById('pdfAlertBox').innerHTML = '<div class="alert alert-success">' + res + '</div>';
+          initApp();
+        }).uploadPdfBySatker({ satker: document.getElementById('selectSatkerPdf').value, fileName: file.name, mimeType: file.type, data: e.target.result.split(',')[1] });
       };
       reader.readAsDataURL(file);
     }
 
     function handlePdfBatchSubmit(event) {
       event.preventDefault();
-      var satkerVal = document.getElementById('selectSatkerBatch').value.trim();
-      var fileInput = document.getElementById('batchPdfFiles');
-      var btn = document.getElementById('pdfBatchSubmitBtn');
-
-      if (!satkerVal) {
-        alert("Pilih/ketik Satuan Kerja terlebih dahulu!");
-        return;
-      }
-      if (fileInput.files.length === 0) {
-        alert("Silakan pilih file PDF terlebih dahulu!");
-        return;
-      }
-
-      var totalFiles = fileInput.files.length;
-
-      if (totalFiles > 50) {
-        alert("Anda memilih " + totalFiles + " file. Batas maksimal upload adalah 50 dokumen per sekali proses! Silakan kurangi pilihan file Anda atau bagi menjadi beberapa gelombang (batch).");
-        return;
-      }
-
-      btn.disabled = true;
-      btn.innerText = "Mengunggah & Memvalidasi " + totalFiles + " File...";
-
-      var fileDataArray = [];
-      var processedCount = 0;
-
-      for (var i = 0; i < totalFiles; i++) {
+      var files = document.getElementById('batchPdfFiles').files;
+      var fileArray = [];
+      var count = 0;
+      for (var i = 0; i < files.length; i++) {
         (function(file) {
           var reader = new FileReader();
           reader.onload = function(e) {
-            var content = e.target.result;
-            var base64Data = content.split(',')[1];
-
-            fileDataArray.push({
-              fileName: file.name,
-              mimeType: file.type,
-              data: base64Data
-            });
-
-            processedCount++;
-            if (processedCount === totalFiles) {
-              google.script.run
-                .withSuccessHandler(function(response) {
-                  document.getElementById('pdfBatchAlertBox').innerHTML = '<div class="alert alert-info">' + response + '</div>';
-                  document.getElementById('pdfBatchForm').reset();
-                  btn.disabled = false;
-                  btn.innerText = "Proses Upload & Validasi Satker";
-                  initApp();
-                })
-                .withFailureHandler(function(error) {
-                  document.getElementById('pdfBatchAlertBox').innerHTML = '<div class="alert alert-danger">Error: ' + error.message + '</div>';
-                  btn.disabled = false;
-                  btn.innerText = "Proses Upload & Validasi Satker";
-                })
-                .uploadPdfBatchWithSatker({
-                  satker: satkerVal,
-                  files: fileDataArray
-                });
+            fileArray.push({ fileName: file.name, mimeType: file.type, data: e.target.result.split(',')[1] });
+            count++;
+            if (count === files.length) {
+              google.script.run.withSuccessHandler(res => {
+                document.getElementById('pdfBatchAlertBox').innerHTML = '<div class="alert alert-info">' + res + '</div>';
+                initApp();
+              }).uploadPdfBatchWithSatker({ satker: document.getElementById('selectSatkerBatch').value, files: fileArray });
             }
           };
           reader.readAsDataURL(file);
-        })(fileInput.files[i]);
+        })(files[i]);
       }
     }
 
-    function sendChat() {
+    function sendChatAI() {
       var input = document.getElementById('chatInput');
       var container = document.getElementById('chatContainer');
       var text = input.value.trim();
       if (!text) return;
 
-      container.innerHTML += '<div class="chat-bubble chat-user">' + text + '</div>';
+      container.innerHTML += `<div class="chat-bubble chat-user">${text}</div>`;
       input.value = "";
       container.scrollTop = container.scrollHeight;
 
       setTimeout(function() {
-        var reply = "Silahkan hubungi Admin, dikarenakan Sistem Interaktif masih dalam Tahap Pengembangan";
+        var reply = "Maaf, informasi tidak ditemukan.";
         var lower = text.toLowerCase();
-        
-        if (lower.includes("upload") || lower.includes("pdf")) {
-          reply = "Untuk upload PDF massal, pastikan format nama file NIP_NamaPanggilan.pdf dan maksimal 50 file per batch.";
+
+        var found = databasePegawaiCache.find(item => item.ni.toLowerCase() === lower || item.nama.toLowerCase().includes(lower));
+        if (found) {
+          reply = `📄 <b>Ditemukan Data Pegawai:</b><br>
+          - <b>Nama:</b> ${found.nama}<br>
+          - <b>NIP:</b> ${found.ni}<br>
+          - <b>Jabatan:</b> ${found.jabatan}<br>
+          - <b>Satker:</b> ${found.satker}<br>
+          - <b>Status Input:</b> ${found.isInputed ? 'Sudah Input ✅' : 'Belum Input ❌'}`;
+        } else if (lower.includes("upload") || lower.includes("pdf")) {
+          reply = "Untuk upload PDF massal pastikan format nama file NIP_Nama.pdf dan maksimal 50 file per batch.";
         } else if (lower.includes("tanggal") || lower.includes("kontrak")) {
-          reply = "Tanggal kontrak otomatis 1 Nov 2026 s.d. 31 Okt 2027.";
-        } else if (lower.includes("bantuan") || lower.includes("error") || lower.includes("halo")) {
-          reply = "Silahkan hubungi Admin, dikarenakan Sistem Interaktif masih dalam Tahap Pengembangan";
+          reply = "Masa kontrak otomatis berlaku dari 1 November 2026 s.d. 31 Oktober 2027.";
+        } else {
+          reply = "Silakan tanyakan seputar alur aplikasi atau ketik NIP/Nama pegawai untuk melihat kartu data instan[cite: 2].";
         }
 
-        container.innerHTML += '<div class="chat-bubble chat-admin">' + reply + '</div>';
+        container.innerHTML += `<div class="chat-bubble chat-admin">${reply}</div>`;
         container.scrollTop = container.scrollHeight;
+      }, 500);
+    }
+
+    function startCountdown() {
+      var end = new Date("Sep 30, 2026 23:59:59").getTime();
+      setInterval(() => {
+        var dist = end - new Date().getTime();
+        var d = Math.floor(dist / (1000*60*60*24));
+        var h = Math.floor((dist % (1000*60*60*24)) / (1000*60*60));
+        var m = Math.floor((dist % (1000*60*60)) / (1000*60));
+        var s = Math.floor((dist % (1000*60)) / 1000);
+        var el = document.getElementById("countdownDisplay");
+        if (el) el.innerHTML = `${d} Hari ${h} Jam ${m} Mnt ${s} Dtk lagi`;
       }, 1000);
     }
-
-    function simpanNamaPelapor(nama) {
-      if (!nama || nama.trim() === "") return;
-      var cleanName = nama.trim();
-      localStorage.setItem('pppk_pelapor_nama', cleanName);
-
-      var daftarNama = JSON.parse(localStorage.getItem('pppk_riwayat_nama_list') || "[]");
-      if (!daftarNama.includes(cleanName)) {
-        daftarNama.push(cleanName);
-        localStorage.setItem('pppk_riwayat_nama_list', JSON.stringify(daftarNama));
-      }
-    }
-
-    function muatNamaPelaporTersimpan() {
-      var savedName = localStorage.getItem('pppk_pelapor_nama');
-      if (savedName) {
-        var inputNama = document.getElementById('ticketNama');
-        if (inputNama && !inputNama.value) {
-          inputNama.value = savedName;
-          loadTicketHistory();
-        }
-      }
-    }
-
-    function clearTicketForm() {
-      localStorage.removeItem('pppk_pelapor_nama');
-      document.getElementById('ticketNama').value = "";
-      document.getElementById('ticketPesan').value = "";
-      document.getElementById('ticketAlertBox').innerHTML = "";
-      document.getElementById('ticketHistoryList').innerHTML = '<p class="text-muted text-center my-1" style="font-size:11px;">Form dibersihkan. Masukkan nama pelapor.</p>';
-    }
-
-    function bukaCekHistoryModal() {
-      var select = document.getElementById('selectHistoryUser');
-      select.innerHTML = '<option value="">-- Pilih Nama dari Perangkat Ini --</option>';
-      
-      var daftarNama = JSON.parse(localStorage.getItem('pppk_riwayat_nama_list') || "[]");
-      daftarNama.forEach(function(n) {
-        select.innerHTML += '<option value="' + n + '">' + n + '</option>';
-      });
-
-      var myModal = new bootstrap.Modal(document.getElementById('historyModal'));
-      myModal.show();
-    }
-
-    function pilihUserDariDropdown() {
-      var select = document.getElementById('selectHistoryUser');
-      var chosen = select.value;
-      if (!chosen) {
-        alert("Silakan pilih salah satu nama terlebih dahulu!");
-        return;
-      }
-
-      document.getElementById('ticketNama').value = chosen;
-      localStorage.setItem('pppk_pelapor_nama', chosen);
-      loadTicketHistory();
-
-      var modalEl = document.getElementById('historyModal');
-      var modal = bootstrap.Modal.getInstance(modalEl);
-      modal.hide();
-    }
-
-    function handleTicketSubmit(event) {
-      event.preventDefault();
-      var nama = document.getElementById('ticketNama').value.trim();
-      var kategori = document.getElementById('ticketKategori').value;
-      var pesan = document.getElementById('ticketPesan').value.trim();
-      var btn = document.getElementById('ticketBtn');
-
-      simpanNamaPelapor(nama);
-
-      btn.disabled = true;
-      btn.innerText = "Mengirim...";
-
-      google.script.run
-        .withSuccessHandler(function(res) {
-          document.getElementById('ticketAlertBox').innerHTML = '<div class="alert alert-success py-1 mb-0">' + res + '</div>';
-          document.getElementById('ticketPesan').value = "";
-          btn.disabled = false;
-          btn.innerText = "Kirim Tiket Laporan";
-          loadTicketHistory();
-        })
-        .withFailureHandler(function(err) {
-          document.getElementById('ticketAlertBox').innerHTML = '<div class="alert alert-danger py-1 mb-0">Error: ' + err.message + '</div>';
-          btn.disabled = false;
-          btn.innerText = "Kirim Tiket Laporan";
-        })
-        .submitTicket({ nama: nama, kategori: kategori, pesan: pesan });
-    }
-
-    function loadTicketHistory() {
-      var activeUser = localStorage.getItem('pppk_pelapor_nama') || document.getElementById('ticketNama').value.trim();
-      var container = document.getElementById('ticketHistoryList');
-      container.innerHTML = "";
-
-      if (!activeUser) {
-        container.innerHTML = '<p class="text-muted text-center my-1" style="font-size:11px;">Masukkan nama pelapor untuk melihat riwayat.</p>';
-        return;
-      }
-
-      google.script.run
-        .withSuccessHandler(function(list) {
-          if (!list || list.length === 0) {
-            container.innerHTML = '<p class="text-muted text-center my-1" style="font-size:11px;">Belum ada riwayat laporan.</p>';
-            return;
-          }
-
-          var myTickets = list.filter(function(t) {
-            return t.nama.toLowerCase() === activeUser.toLowerCase();
-          });
-
-          if (myTickets.length === 0) {
-            container.innerHTML = '<p class="text-muted text-center my-1" style="font-size:11px;">Belum ada riwayat untuk: <b>' + activeUser + '</b></p>';
-            return;
-          }
-
-          myTickets.forEach(function(t) {
-            var badgeClass = t.status === 'Selesai' ? 'bg-success' : 'bg-warning text-dark';
-            var balasanHtml = t.balasan ? '<div class="text-primary mt-1"><b>Balasan Admin:</b> ' + t.balasan + '</div>' : '';
-            container.innerHTML += '<div class="border-bottom pb-1 mb-1">' +
-              '<div class="d-flex justify-content-between"><b>' + t.kategori + '</b><span class="badge ' + badgeClass + '" style="font-size:8px;">' + t.status + '</span></div>' +
-              '<p class="mb-0 text-muted">' + t.pesan + '</p>' +
-              balasanHtml +
-              '<small class="text-secondary" style="font-size:9px;">' + t.tanggal + '</small>' +
-            '</div>';
-          });
-        })
-        .getTicketHistory();
-    }
-
-    function toggleAdminPanel() {
-      var pwd = prompt("Masukkan Password Admin:");
-      if (pwd === null) return;
-      
-      if (pwd === "osdm321") {
-        var panel = document.getElementById('adminPanel');
-        panel.classList.toggle('d-none');
-        if (!panel.classList.contains('d-none')) {
-          loadAdminTickets();
-        }
-      } else {
-        alert("Password salah! Akses ditolak.");
-      }
-    }
-
-    function loadAdminTickets() {
-      google.script.run
-        .withSuccessHandler(function(list) {
-          var tbody = document.getElementById('adminTicketTable');
-          tbody.innerHTML = "";
-
-          if (!list || list.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-2">Belum ada tiket masuk.</td></tr>';
-            return;
-          }
-
-          list.forEach(function(t) {
-            var tr = document.createElement('tr');
-            tr.innerHTML = '<td class="text-center">' + t.tanggal + '</td>' +
-                           '<td><b>' + t.nama + '</b><br><small class="text-muted">' + t.kategori + '</small></td>' +
-                           '<td>' + t.pesan + '</td>' +
-                           '<td class="text-center">' +
-                             '<select id="status_' + t.rowIndex + '" class="form-select form-select-sm" style="font-size:10px;">' +
-                               '<option value="Menunggu Konfirmasi" ' + (t.status === 'Menunggu Konfirmasi' ? 'selected' : '') + '>Menunggu Konfirmasi</option>' +
-                               '<option value="Diproses" ' + (t.status === 'Diproses' ? 'selected' : '') + '>Diproses</option>' +
-                               '<option value="Selesai" ' + (t.status === 'Selesai' ? 'selected' : '') + '>Selesai</option>' +
-                             '</select>' +
-                           '</td>' +
-                           '<td><input type="text" id="balasan_' + t.rowIndex + '" class="form-control form-control-sm" value="' + (t.balasan || '') + '" placeholder="Ketik balasan..." style="font-size:10px;"></td>' +
-                           '<td class="text-center"><button class="btn btn-sm btn-success py-0 px-2" style="font-size:10px;" onclick="saveAdminResponse(' + t.rowIndex + ')">Simpan</button></td>';
-            tbody.appendChild(tr);
-          });
-        })
-        .getTicketHistory();
-    }
-
-    function saveAdminResponse(rowIndex) {
-      var status = document.getElementById('status_' + rowIndex).value;
-      var balasan = document.getElementById('balasan_' + rowIndex).value;
-
-      google.script.run
-        .withSuccessHandler(function(res) {
-          alert(res);
-          loadAdminTickets();
-        })
-        .withFailureHandler(function(err) {
-          alert("Gagal: " + err.message);
-        })
-        .adminUpdateTicket({ rowIndex: rowIndex, status: status, balasan: balasan });
-    }
-
-    function downloadExcelTemplate() {
-      var excelXML = '<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' +
-        '<Worksheet ss:Name="config"><Table>' +
-        '<Row><Cell><Data ss:Type="String">NO.</Data></Cell><Cell><Data ss:Type="String">NI PPPK</Data></Cell><Cell><Data ss:Type="String">NAMA PEGAWAI</Data></Cell><Cell><Data ss:Type="String">JENIS KELAMIN</Data></Cell><Cell><Data ss:Type="String">TEMPAT TANGGAL LAHIR</Data></Cell><Cell><Data ss:Type="String">GOLONGAN</Data></Cell><Cell><Data ss:Type="String">NAMA JABATAN</Data></Cell><Cell><Data ss:Type="String">NAMA SATUAN KERJA</Data></Cell></Row>' +
-        '</Table></Worksheet></Workbook>';
-      
-      var blob = new Blob([excelXML], { type: 'application/vnd.ms-excel' });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = "template_import_pegawai.xls";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-
-    function handleImportExcel() {
-      var fileInput = document.getElementById('excelFile');
-      var btn = document.getElementById('importBtn');
-      if (fileInput.files.length === 0) {
-        alert("Silakan pilih file terlebih dahulu!");
-        return;
-      }
-
-      var file = fileInput.files[0];
-      btn.disabled = true;
-      btn.innerText = "Mengunggah dan Memproses...";
-
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        var content = e.target.result;
-        var base64Data = content.split(',')[1];
-
-        google.script.run
-          .withSuccessHandler(text => {
-            document.getElementById('importAlertBox').innerHTML = '<div class="alert alert-success">' + text + '</div>';
-            fileInput.value = "";
-            btn.disabled = false;
-            btn.innerText = "Proses Import Data";
-            initApp();
-          })
-          .withFailureHandler(err => {
-            document.getElementById('importAlertBox').innerHTML = '<div class="alert alert-danger">Error: ' + err.message + '</div>';
-            btn.disabled = false;
-            btn.innerText = "Proses Import Data";
-          })
-          .importDataExcel({
-            data: base64Data,
-            fileName: file.name,
-            mimeType: file.type
-          });
-      };
-      reader.readAsDataURL(file);
-    }
   </script>
-  
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
