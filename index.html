@@ -268,7 +268,7 @@
               - Anda bisa menekan tombol <b>Ctrl</b> atau <b>Shift</b> saat memilih file.
             </div>
 
-            <form id="pdfBatchForm" onsubmit="handlePdfBatchSubmit(event)">
+            <form id="pdfBatchForm" onsubmit="startBatchUpload(event)">
               <div class="mb-3">
                 <label class="form-label fw-bold">Filter Satuan Kerja (Satker) - Ketik atau Pilih</label>
                 <input class="form-control" list="satkerOptionsBatch" id="selectSatkerBatch" placeholder="Ketik atau pilih Satker..." required>
@@ -276,12 +276,22 @@
               </div>
 
               <div class="mb-3">
-                <label class="form-label fw-bold">Pilih Banyak File PDF (.pdf) - Maks. 50 File</label>
+                <label class="form-label fw-bold">Pilih Banyak File PDF (.pdf) - Tanpa Batas Jumlah</label>
                 <input type="file" class="form-control" id="batchPdfFiles" accept=".pdf" multiple required>
+                <small class="text-muted">Maksimal ukuran file adalah 10 MB per dokumen. Sistem akan mengunggah secara otomatis dalam antrean.</small>
               </div>
 
-              <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" id="pdfBatchSubmitBtn">Proses Upload & Validasi Satker</button>
+              <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" id="pdfBatchSubmitBtn">🚀 Mulai Unggah Antrean ke GitHub</button>
             </form>
+
+            <!-- Tambahkan Kotak Progres Bar di Sini -->
+            <div id="batchProgressContainer" class="mt-3 d-none">
+              <p id="batchStatusMessage" class="text-sm font-medium text-secondary text-center mb-1">Menyiapkan antrean...</p>
+              <div class="progress" style="height: 10px;">
+                <div id="batchProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 0%"></div>
+              </div>
+            </div>
+
             <div id="pdfBatchAlertBox" class="mt-3"></div>
           </div>
 
