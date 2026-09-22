@@ -756,27 +756,125 @@
       };
       reader.readAsDataURL(file);
     }
+// Konfigurasi Repositori GitHub Anda
+    const GITHUB_CONFIG = {
+        username: "rumahintegritas",
+        repo: "pppkpw2627",
+        branch: "main",
+        token: "MASUKKAN_GITHUB_TOKEN_ANDA_DI_SINI" // Ganti dengan Personal Access Token (classic) Anda
+    };
 
-    function handlePdfBatchSubmit(event) {
-      event.preventDefault();
-      var files = document.getElementById('batchPdfFiles').files;
-      var fileArray = []; var count = 0;
-      for (var i = 0; i < files.length; i++) {
-        (function(file) {
-          var reader = new FileReader();
-          reader.onload = function(e) {
-            fileArray.push({ fileName: file.name, mimeType: file.type, data: e.target.result.split(',')[1] });
-            count++;
-            if (count === files.length) {
-              google.script.run.withSuccessHandler(res => {
-                document.getElementById('pdfBatchAlertBox').innerHTML = '<div class="alert alert-info">' + res + '</div>';
-                initApp();
-              }).uploadPdfBatchWithSatker({ satker: document.getElementById('selectSatkerBatch').value, files: fileArray });
+    // Fungsi utama penanganan antrean unggah massal
+    async function startBatchUpload(event) {
+        event.preventDefault();
+        
+        const satkerName = document.getElementById('selectSatkerBatch').value.trim();
+        const fileInput = document.getElementById('batchPdfFiles');
+        const files = fileInput.files;
+        const alertBox = document.getElementById('pdfBatchAlertBox');
+        const submitBtn = document.getElementById('pdfBatchSubmitBtn');
+        
+        alertBox.innerHTML = "";
+
+        if (!satkerName) {
+            alert("Mohon pilih Satuan Kerja terlebih dahulu!");
+            return;
+        }
+
+        if (files.length === 0) {
+            alert("Mohon pilih minimal satu file PDF!");
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Sedang Mengunggah Antrean...";
+
+        const progressContainer = document.getElementById('batchProgressContainer');
+        const statusMessage = document.getElementById('batchStatusMessage');
+        const progressBar = document.getElementById('batchProgressBar');
+        progressContainer.classList.remove('d-none');
+
+        let successCount = 0;
+        let failedCount = 0;
+        const totalFiles = files.length;
+
+        for (let i = 0; i < totalFiles; i++) {
+            let file = files[i];
+            let currentNumber = i + 1;
+            
+            statusMessage.innerText = `Mengunggah (${currentNumber}/${totalFiles}): ${file.name}`;
+            let percent = Math.round((currentNumber / totalFiles) * 100);
+            progressBar.style.width = percent + "%";
+
+            // Validasi Ukuran File (Maksimal 10 MB)
+            const maxSize = 10 * 1024 * 1024; 
+            if (file.size > maxSize) {
+                console.warn(`File ${file.name} ditolak karena ukurannya melebihi 10 MB.`);
+                failedCount++;
+                continue; 
             }
-          };
-          reader.readAsDataURL(file);
-        })(files[i]);
-      }
+
+            try {
+                let fileUrl = await uploadSingleFileToGitHub(file, satkerName);
+                if (fileUrl) {
+                    successCount++;
+                } else {
+                    failedCount++;
+                }
+            } catch (error) {
+                console.error(`Gagal pada file ${file.name}:`, error);
+                failedCount++;
+            }
+
+            // Jeda waktu 1 detik antar file agar API stabil
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Proses Upload & Validasi Satker";
+        statusMessage.innerText = `Selesai! Berhasil: ${successCount}, Gagal/Ditolak (>10MB): ${failedCount}`;
+        alertBox.innerHTML = `<div class="alert alert-success">Proses unggah massal selesai!<br><b>Berhasil diunggah:</b> ${successCount}<br><b>Gagal / Lebih dari 10MB:</b> ${failedCount}</div>`;
+    }
+
+    async function uploadSingleFileToGitHub(file, satkerName) {
+        const timestamp = new Date().toISOString().replace(/[-:]/g, "").split(".")[0];
+        const cleanFileName = file.name.replace(/[^a-zA-Z0-9_.-]/g, "_");
+        const filePath = `documents/${satkerName}_${timestamp}_${cleanFileName}`;
+
+        const base64Content = await convertFileToBase64(file);
+        const url = `https://api.github.com/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}/contents/${filePath}`;
+
+        const payload = {
+            message: `Upload PDF Satker ${satkerName}: ${file.name}`,
+            content: base64Content,
+            branch: GITHUB_CONFIG.branch
+        };
+
+        const response = await fetch(url, {
+            method: "PUT",
+            headers: {
+                "Authorization": `token ${GITHUB_CONFIG.token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            return `https://${GITHUB_CONFIG.username}.github.io/${GITHUB_CONFIG.repo}/${filePath}`;
+        } else {
+            const err = await response.json();
+            throw new Error(err.message || "Gagal upload ke GitHub");
+        }
+    }
+
+    function convertFileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = error => reject(error);
+        });
+    }
     }
 
     function sendChatAI() {
