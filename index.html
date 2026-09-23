@@ -32,6 +32,10 @@
     .stat-card { border-left: 5px solid #0d6efd; border-radius: 8px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
  /* --- CSS KHUSUS CETAK BERSIH DI PALING BAWAH --- */
     @media print {
+      @page {
+        size: landscape;
+        margin: 10mm;
+      }
       body * {
         visibility: hidden;
       }
@@ -47,6 +51,10 @@
       .card {
         border: none !important;
         box-shadow: none !important;
+      }
+      /* Mengecilkan sedikit ukuran font tabel saat dicetak agar semua kolom muat sempurna */
+      #tabelNominatif {
+        font-size: 9px !important;
       }
     }
   </style>
