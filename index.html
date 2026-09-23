@@ -30,6 +30,25 @@
     .help-action-btn { transition: all 0.2s; }
     .help-action-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
     .stat-card { border-left: 5px solid #0d6efd; border-radius: 8px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+ /* --- CSS KHUSUS CETAK BERSIH DI PALING BAWAH --- */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printableArea, #printableArea * {
+        visibility: visible;
+      }
+      #printableArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+      .card {
+        border: none !important;
+        box-shadow: none !important;
+      }
+    }
   </style>
 </head>
 <body class="bg-light" onload="initApp()">
@@ -263,7 +282,7 @@
             
             <div class="alert alert-warning p-3 mb-3" style="font-size: 13px;">
               📌 <b>Aturan & Panduan Penggunaan Tautan:</b><br>
-              - <b>Untuk Satker dengan pegawai banyak (Massal):</b> Buat 1 Folder Google Drive khusus Satker tersebut, masukkan seluruh file PDF dengan nama berformat <b>NIP_NamaPanggilan.pdf</b> (Contoh: <code>199004052026011001_Toni.pdf</code>). Atur akses berbagi <b>foldernya</b> menjadi <b>"Anyone with the link" (Viewer)</b>, lalu salin tautan folder tersebut ke sini.<br>
+              - <b>Untuk Satker dengan pegawai banyak (Massal):</b> Buat 1 Folder Google Drive khusus Satker tersebut, masukkan seluruh file PDF dengan nama berformat <b>NIP_NamaPanggilan.pdf</b> (Contoh: <code>199804012026011001_fulan.pdf</code>). Atur akses berbagi <b>foldernya</b> menjadi <b>"Anyone with the link" (Viewer)</b>, lalu salin tautan folder tersebut ke sini.<br>
               - <b>Untuk Satker dengan pegawai sedikit / satuan:</b> Anda cukup menempelkan tautan file PDF perorangan secara langsung.<br>
               - Sistem akan secara otomatis mencocokkan nama file dengan NIP pegawai di Spreadsheet!
             </div>
@@ -345,7 +364,7 @@
                       <button class="accordion-button collapsed py-2 fw-bold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" style="font-size: 12px;">2. Bagaimana aturan penautan dokumen massal Perjanjian Kerja?</button>
                     </h2>
                     <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                      <div class="accordion-body py-2 text-secondary" style="font-size: 11px;">Buat folder Google Drive untuk Satker, pastikan nama file berformat <b>NIP_Nama.pdf</b> (contoh: <code>199004052026011001_Toni.pdf</code>), atur izin folder ke <i>Anyone with the link</i>, lalu tempel tautan foldernya.</div>
+                      <div class="accordion-body py-2 text-secondary" style="font-size: 11px;">Buat folder Google Drive untuk Satker, pastikan nama file berformat <b>NIP_Nama.pdf</b> (contoh: <code>199804012026011001_fulan.pdf</code>), atur izin folder ke <i>Anyone with the link</i>, lalu tempel tautan foldernya.</div>
                     </div>
                   </div>
                   <div class="accordion-item mb-2 border rounded">
