@@ -953,27 +953,36 @@
       }, 1000);
     }
   function resetAplikasiTotal() {
-  // Bersihkan input filter pencarian jika ada
-  var filterSatker = document.getElementById('filterSatker');
-  var filterKeyword = document.getElementById('filterKeyword');
-  if (filterSatker) filterSatker.value = "";
-  if (filterKeyword) filterKeyword.value = "";
+  // 1. Kosongkan semua kotak input teks / URL tautan di halaman
+  var semuaInput = document.querySelectorAll('input[type="text"], input[type="url"], textarea');
+  semuaInput.forEach(function(input) {
+    input.value = "";
+  });
 
-  // Bersihkan form input satuan jika sedang aktif
+  // 2. Reset elemen pilihan select jika ada
+  var semuaSelect = document.querySelectorAll('select');
+  semuaSelect.forEach(function(sel) {
+    sel.selectedIndex = 0;
+  });
+
+  // 3. Jalankan fungsi reset bawaan jika tersedia di aplikasi
   if (typeof resetFormManual === 'function') {
     resetFormManual();
   }
 
-  // Muat ulang data dashboard dan ringkasan satker ke kondisi default
+  // 4. Muat ulang data dashboard utama
   if (typeof initApp === 'function') {
     initApp();
   }
 
-  // Kosongkan tabel hasil cetak/filter
+  // 5. Kosongkan tabel hasil pencarian/cetak jika ada
   var tabelHasil = document.getElementById('tabelHasilCetak');
   if (tabelHasil) {
-    tabelHasil.innerHTML = '<tr><td colspan="12" class="text-center">Tampilan telah di-refresh ke kondisi default. Silakan pilih filter atau ketik pencarian.</td></tr>';
+    tabelHasil.innerHTML = '<tr><td colspan="12" class="text-center text-muted">Tampilan telah di-refresh ke kondisi default.</td></tr>';
   }
+
+  // Berikan sedikit notifikasi visual bahwa refresh berhasil
+  console.log("Aplikasi berhasil di-refresh.");
 }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
