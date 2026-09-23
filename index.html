@@ -77,7 +77,7 @@
           <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dashboardArea" onclick="loadDashboardData()">📊 Dashboard Monitoring</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#single" onclick="loadSatkerDatalists()">Input Satuan</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#import">Import Excel</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pdfUpload" onclick="loadSatkerDatalists()">Surat Persetujuan (Tautan)</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pdfUpload" onclick="loadSatkerDatalists()">Surat Usulan (Tautan)</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#printArea" onclick="loadSatkerDatalists(); filterDataCetak();">Cetak & Filter</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#batchUpload" onclick="loadSatkerDatalists()">Perjanjian Kerja (Tautan Massal)</button></li>
           <li class="nav-item"><button class="nav-link bg-info text-white fw-bold" data-bs-toggle="tab" data-bs-target="#helpdeskArea" onclick="loadTicketHistory()">🛟 Helpdesk & Bantuan</button></li>
@@ -220,7 +220,7 @@
           <div class="tab-pane fade" id="pdfUpload" role="tabpanel">
             <div class="alert alert-warning mb-3" style="font-size: 13px;">
               <strong>💡 Panduan Surat Persetujuan:</strong><br>
-              - Dokumen Surat Persetujuan Usul dan Surat Pernyataan Pimpinan Satker agar digabung (*merge*) menjadi satu file PDF ke Google Drive Anda.<br>
+              - Dokumen Surat Usulan menjadi satu file PDF ke Google Drive Anda.<br>
               - Atur akses berbagi file menjadi <b>"Siapa saja yang memiliki tautan" (Anyone with the link / Viewer)</b>.<br>
               - Salin tautan tersebut dan tempelkan di bawah ini.
             </div>
@@ -293,7 +293,7 @@
             <div class="alert alert-warning p-3 mb-3" style="font-size: 13px;">
               📌 <b>Aturan & Panduan Penggunaan Tautan:</b><br>
               - <b>Untuk Satker dengan pegawai banyak (Massal):</b> Buat 1 Folder Google Drive khusus Satker tersebut, masukkan seluruh file PDF dengan nama berformat <b>NIP_NamaPanggilan.pdf</b> (Contoh: <code>199804012026011001_fulan.pdf</code>). Atur akses berbagi <b>foldernya</b> menjadi <b>"Anyone with the link" (Viewer)</b>, lalu salin tautan folder tersebut ke sini.<br>
-              - <b>Untuk Satker dengan pegawai sedikit / satuan:</b> Anda cukup menempelkan tautan file PDF perorangan secara langsung.<br>
+              - <b>Untuk Satker dengan pegawai sedikit / satuan:</b> Anda cukup menempelkan tautan file PDF perorangan secara langsung file PDF dengan nama berformat <b>NIP_NamaPanggilan.pdf</b> (Contoh: <code>199804012026011001_fulan.pdf.<br>
               - Sistem akan secara otomatis mencocokkan nama file dengan NIP pegawai di Spreadsheet!
             </div>
 
