@@ -69,8 +69,10 @@
             <span id="countdownDisplay" class="countdown-badge">Memuat Waktu...</span> ⏰
           </div>
         </div>
-
-        <h4 class="mb-3 text-dark fw-bold">Manajemen Data Pegawai & Kontrak</h4>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-3 text-dark fw-bold mb-0">Manajemen Data Pegawai & Kontrak</h4>
+  <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" onclick="resetAplikasiTotal()">🔄 Refresh Tampilan</button>
+</div>
         <ul class="nav nav-pills custom-tabs" id="myTab" role="tablist">
           <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dashboardArea" onclick="loadDashboardData()">📊 Dashboard Monitoring</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#single" onclick="loadSatkerDatalists()">Input Satuan</button></li>
@@ -950,6 +952,29 @@
         if (el) el.innerHTML = `${d} Hari ${h} Jam ${m} Mnt ${s} Dtk lagi`;
       }, 1000);
     }
+  function resetAplikasiTotal() {
+  // Bersihkan input filter pencarian jika ada
+  var filterSatker = document.getElementById('filterSatker');
+  var filterKeyword = document.getElementById('filterKeyword');
+  if (filterSatker) filterSatker.value = "";
+  if (filterKeyword) filterKeyword.value = "";
+
+  // Bersihkan form input satuan jika sedang aktif
+  if (typeof resetFormManual === 'function') {
+    resetFormManual();
+  }
+
+  // Muat ulang data dashboard dan ringkasan satker ke kondisi default
+  if (typeof initApp === 'function') {
+    initApp();
+  }
+
+  // Kosongkan tabel hasil cetak/filter
+  var tabelHasil = document.getElementById('tabelHasilCetak');
+  if (tabelHasil) {
+    tabelHasil.innerHTML = '<tr><td colspan="12" class="text-center">Tampilan telah di-refresh ke kondisi default. Silakan pilih filter atau ketik pencarian.</td></tr>';
+  }
+}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
