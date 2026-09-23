@@ -48,9 +48,9 @@
           <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dashboardArea" onclick="loadDashboardData()">📊 Dashboard Monitoring</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#single" onclick="loadSatkerDatalists()">Input Satuan</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#import">Import Excel</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pdfUpload" onclick="loadSatkerDatalists()">Upload Surat Persetujuan</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pdfUpload" onclick="loadSatkerDatalists()">Surat Persetujuan (Tautan)</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#printArea" onclick="loadSatkerDatalists(); filterDataCetak();">Cetak & Filter</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#batchUpload" onclick="loadSatkerDatalists()">Upload Dokumen Massal Perjanjian Kerja</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#batchUpload" onclick="loadSatkerDatalists()">Perjanjian Kerja (Tautan Massal)</button></li>
           <li class="nav-item"><button class="nav-link bg-info text-white fw-bold" data-bs-toggle="tab" data-bs-target="#helpdeskArea" onclick="loadTicketHistory()">🛟 Helpdesk & Bantuan</button></li>
         </ul>
       </div>
@@ -187,15 +187,18 @@
             <div id="importAlertBox" class="mt-3"></div>
           </div>
 
-          <!-- TAB 3: UPLOAD SURAT PERSETUJUAN -->
+          <!-- TAB 3: UPLOAD SURAT PERSETUJUAN (VIA TAUTAN) -->
           <div class="tab-pane fade" id="pdfUpload" role="tabpanel">
-            <div style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px 15px; border-radius: 4px; font-size: 13px; margin-bottom: 15px;">
-    <strong>Catatan:</strong> Dokumen Surat Persetujuan Usul dan Surat Pernyataan Pimpinan Satker agar digabung (merge) menjadi satu file PDF.
-</div>
-            <h5 class="mb-3 text-danger fw-bold">Upload Dokumen Surat Persetujuan (PDF) Berdasarkan Satker</h5>
-            <p class="text-muted">Ketik atau pilih Satuan Kerja, lalu pilih file dokumen PDF surat persetujuannya untuk diunggah.</p>
+            <div class="alert alert-warning mb-3" style="font-size: 13px;">
+              <strong>💡 Panduan Surat Persetujuan:</strong><br>
+              - Dokumen Surat Persetujuan Usul dan Surat Pernyataan Pimpinan Satker agar digabung (*merge*) menjadi satu file PDF ke Google Drive Anda.<br>
+              - Atur akses berbagi file menjadi <b>"Siapa saja yang memiliki tautan" (Anyone with the link / Viewer)</b>.<br>
+              - Salin tautan tersebut dan tempelkan di bawah ini.
+            </div>
+
+            <h5 class="mb-3 text-danger fw-bold">Penautan Dokumen Surat Persetujuan Berdasarkan Satker</h5>
             
-            <form id="pdfForm" onsubmit="handlePdfSubmit(event)">
+            <form id="pdfForm" onsubmit="handleTautanSuratSubmit(event)">
               <div class="mb-3">
                 <label class="form-label fw-bold">Satuan Kerja (Satker) - Ketik atau Pilih</label>
                 <input class="form-control" list="satkerOptionsPdf" id="selectSatkerPdf" placeholder="Ketik atau pilih Satker..." required>
@@ -203,12 +206,11 @@
               </div>
 
               <div class="mb-3">
-                <label class="form-label fw-bold">Pilih File Dokumen PDF Surat Persetujuan (.pdf)</label>
-                <input type="file" class="form-control" id="pdfFile" accept=".pdf" required>
-                <small class="text-muted">File akan diunggah otomatis ke Google Drive dan ditautkan ke seluruh pegawai pada Satker terpilih.</small>
+                <label class="form-label fw-bold">Tempel Tautan Google Drive (URL Surat Persetujuan PDF)</label>
+                <input type="url" class="form-control" id="linkSuratPersetujuan" placeholder="https://drive.google.com/file/d/.../view" required>
               </div>
 
-              <button type="submit" class="btn btn-danger w-100 py-2 fw-bold" id="pdfSubmitBtn">Upload & Tautkan ke Satker</button>
+              <button type="submit" class="btn btn-danger w-100 py-2 fw-bold" id="pdfSubmitBtn">Simpan & Tautkan ke Satker</button>
             </form>
             <div id="pdfAlertBox" class="mt-3"></div>
           </div>
@@ -255,20 +257,18 @@
             </div>
           </div>
 
-          <!-- TAB 5: UPLOAD DOKUMEN MASSAL PERJANJIAN KERJA -->
+          <!-- TAB 5: UPLOAD DOKUMEN MASSAL PERJANJIAN KERJA (VIA TAUTAN / FOLDER) -->
           <div class="tab-pane fade" id="batchUpload" role="tabpanel">
-            <h5 class="mb-3 text-primary fw-bold">Upload Dokumen Massal Perjanjian Kerja (Multi-Select)</h5>
-            <p class="text-muted">Ketik atau pilih Satuan Kerja dari database, lalu pilih banyak file PDF sekaligus.</p>
+            <h5 class="mb-3 text-primary fw-bold">Penautan Dokumen Massal Perjanjian Kerja (Fleksibel: Per File / Folder)</h5>
             
             <div class="alert alert-warning p-3 mb-3" style="font-size: 13px;">
-              📌 <b>Aturan & Panduan:</b><br>
-              - Ketik atau pilih Satuan Kerja yang valid.<br>
-              - Format nama file wajib: <b>NIP_NamaPanggilan.pdf</b> (Contoh: <code>199004052026011001_Toni.pdf</code>)<br>
-              - <b>Maksimal upload adalah 50 file PDF per sekali proses</b>.<br>
-              - Anda bisa menekan tombol <b>Ctrl</b> atau <b>Shift</b> saat memilih file.
+              📌 <b>Aturan & Panduan Penggunaan Tautan:</b><br>
+              - <b>Untuk Satker dengan pegawai banyak (Massal):</b> Buat 1 Folder Google Drive khusus Satker tersebut, masukkan seluruh file PDF dengan nama berformat <b>NIP_NamaPanggilan.pdf</b> (Contoh: <code>199004052026011001_Toni.pdf</code>). Atur akses berbagi <b>foldernya</b> menjadi <b>"Anyone with the link" (Viewer)</b>, lalu salin tautan folder tersebut ke sini.<br>
+              - <b>Untuk Satker dengan pegawai sedikit / satuan:</b> Anda cukup menempelkan tautan file PDF perorangan secara langsung.<br>
+              - Sistem akan secara otomatis mencocokkan nama file dengan NIP pegawai di Spreadsheet!
             </div>
 
-            <form id="pdfBatchForm" onsubmit="startBatchUpload(event)">
+            <form id="pdfBatchForm" onsubmit="handleTautanMassalSubmit(event)">
               <div class="mb-3">
                 <label class="form-label fw-bold">Filter Satuan Kerja (Satker) - Ketik atau Pilih</label>
                 <input class="form-control" list="satkerOptionsBatch" id="selectSatkerBatch" placeholder="Ketik atau pilih Satker..." required>
@@ -276,21 +276,13 @@
               </div>
 
               <div class="mb-3">
-                <label class="form-label fw-bold">Pilih Banyak File PDF (.pdf) - Tanpa Batas Jumlah</label>
-                <input type="file" class="form-control" id="batchPdfFiles" accept=".pdf" multiple required>
-                <small class="text-muted">Maksimal ukuran file adalah 10 MB per dokumen. Sistem akan mengunggah secara otomatis dalam antrean.</small>
+                <label class="form-label fw-bold">Tempel Tautan Folder Google Drive atau Tautan File</label>
+                <input type="url" class="form-control" id="linkMassalInput" placeholder="https://drive.google.com/drive/folders/... atau Link File" required>
+                <small class="text-muted">Sistem akan otomatis memindai dan menautkan dokumen ke data pegawai yang sesuai.</small>
               </div>
 
-              <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" id="pdfBatchSubmitBtn">🚀 Mulai Unggah Antrean ke GitHub</button>
+              <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" id="pdfBatchSubmitBtn">🚀 Proses & Tautkan Otomatis</button>
             </form>
-
-            <!-- Tambahkan Kotak Progres Bar di Sini -->
-            <div id="batchProgressContainer" class="mt-3 d-none">
-              <p id="batchStatusMessage" class="text-sm font-medium text-secondary text-center mb-1">Menyiapkan antrean...</p>
-              <div class="progress" style="height: 10px;">
-                <div id="batchProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 0%"></div>
-              </div>
-            </div>
 
             <div id="pdfBatchAlertBox" class="mt-3"></div>
           </div>
@@ -350,10 +342,10 @@
                   </div>
                   <div class="accordion-item mb-2 border rounded">
                     <h2 class="accordion-header" id="headingTwo">
-                      <button class="accordion-button collapsed py-2 fw-bold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" style="font-size: 12px;">2. Bagaimana aturan upload dokumen PDF massal Perjanjian Kerja?</button>
+                      <button class="accordion-button collapsed py-2 fw-bold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" style="font-size: 12px;">2. Bagaimana aturan penautan dokumen massal Perjanjian Kerja?</button>
                     </h2>
                     <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                      <div class="accordion-body py-2 text-secondary" style="font-size: 11px;">Pastikan nama file berformat <b>NIP_NamaPanggilan.pdf</b> (contoh: <code>199004052026011001_Toni.pdf</code>). Pilih Satker yang sesuai, lalu pilih maksimal 50 file PDF sekaligus per proses unggah.</div>
+                      <div class="accordion-body py-2 text-secondary" style="font-size: 11px;">Buat folder Google Drive untuk Satker, pastikan nama file berformat <b>NIP_Nama.pdf</b> (contoh: <code>199004052026011001_Toni.pdf</code>), atur izin folder ke <i>Anyone with the link</i>, lalu tempel tautan foldernya.</div>
                     </div>
                   </div>
                   <div class="accordion-item mb-2 border rounded">
@@ -400,7 +392,7 @@
                         <div class="col-md-4 mb-2">
                           <label class="form-label fw-bold mb-1" style="font-size: 11px;">Kategori Kendala</label>
                           <select class="form-select form-select-sm" id="ticketKategori">
-                            <option value="Upload PDF Gagal">Upload PDF Gagal / Ditolak</option>
+                            <option value="Akses Tautan Gagal">Akses Tautan / Folder Gagal</option>
                             <option value="Data Pegawai Tidak Sesuai">Data Pegawai Tidak Sesuai</option>
                             <option value="Error Saat Import Excel">Error Saat Import Excel</option>
                             <option value="Lainnya">Lainnya</option>
@@ -462,7 +454,7 @@
   </div>
 
   <script>
-    var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_quQmUmKVk1odgZmNP6QPtmLsPR3u3dArVyymgHIVtzVxAKw6fda-u5D9m9XvsZRj/exec";  
+    var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydHdW6a_YPwH41E0V8-xq1SYDtZq9Y4C4ggntVXrTAC90BhYLAhIY8wQdnamok6YRa/exec";  
     var databasePegawaiCache = [];
 
     function callServer(action, payload, cb, errCb) {
@@ -500,8 +492,8 @@
           cariDataPegawai: function(s, k) { callServer("cariDataPegawai", {filterSatker: s, keyword: k}, this.cb, this.errCb); },
           simpanData: function(d) { callServer("simpanData", d, this.cb, this.errCb); },
           importDataExcel: function(d) { callServer("importDataExcel", d, this.cb, this.errCb); },
-          uploadPdfBySatker: function(d) { callServer("uploadPdfBySatker", d, this.cb, this.errCb); },
-          uploadPdfBatchWithSatker: function(d) { callServer("uploadPdfBatchWithSatker", d, this.cb, this.errCb); },
+          simpanTautanSuratPersetujuan: function(d) { callServer("simpanTautanSuratPersetujuan", d, this.cb, this.errCb); },
+          simpanTautanDokumenMassal: function(d) { callServer("simpanTautanDokumenMassal", d, this.cb, this.errCb); },
           submitTicket: function(d) { callServer("submitTicket", d, this.cb, this.errCb); },
           getTicketHistory: function() { callServer("getTicketHistory", null, this.cb, this.errCb); },
           adminUpdateTicket: function(d) { callServer("adminUpdateTicket", d, this.cb, this.errCb); }
@@ -670,8 +662,8 @@
             <td>${item.satker}</td>
             <td>${item.tglMulai}</td>
             <td>${item.tglAkhir}</td>
-            <td class="text-center">${item.linkPersetujuan ? '<a href="'+item.linkPersetujuan+'" target="_blank">Lihat PDF</a>' : 'Belum ada'}</td>
-            <td class="text-center">${item.linkPerjanjian ? '<a href="'+item.linkPerjanjian+'" target="_blank">Lihat PDF</a>' : 'Belum ada'}</td>
+            <td class="text-center">${item.linkPersetujuan ? '<a href="'+item.linkPersetujuan+'" target="_blank">Lihat Dokumen</a>' : 'Belum ada'}</td>
+            <td class="text-center">${item.linkPerjanjian ? '<a href="'+item.linkPerjanjian+'" target="_blank">Lihat Dokumen</a>' : 'Belum ada'}</td>
           </tr>`;
         });
       }).cariDataPegawai(satker, keyword);
@@ -744,136 +736,56 @@
       reader.readAsDataURL(fileInput.files[0]);
     }
 
-    function handlePdfSubmit(event) {
+    // Handler Penautan Surat Persetujuan via URL Tautan
+    function handleTautanSuratSubmit(event) {
       event.preventDefault();
-      var file = document.getElementById('pdfFile').files[0];
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        google.script.run.withSuccessHandler(res => {
+      var satker = document.getElementById('selectSatkerPdf').value;
+      var linkUrl = document.getElementById('linkSuratPersetujuan').value;
+      var btn = document.getElementById('pdfSubmitBtn');
+      
+      btn.disabled = true;
+      btn.innerText = "Menyimpan Tautan...";
+
+      google.script.run
+        .withSuccessHandler(res => {
           document.getElementById('pdfAlertBox').innerHTML = '<div class="alert alert-success">' + res + '</div>';
+          document.getElementById('pdfForm').reset();
+          btn.disabled = false;
+          btn.innerText = "Simpan & Tautkan ke Satker";
           initApp();
-        }).uploadPdfBySatker({ satker: document.getElementById('selectSatkerPdf').value, fileName: file.name, mimeType: file.type, data: e.target.result.split(',')[1] });
-      };
-      reader.readAsDataURL(file);
-    }
-// Konfigurasi Repositori GitHub Anda
-    const GITHUB_CONFIG = {
-        username: "rumahintegritas",
-        repo: "pppkpw2627",
-        branch: "main",
-        token: "Z2hwX0xZRG9BT29BMG1hMFlJdnpXTTUxOTNUUzh4ZHRMbzMwb0kxNw==" // Ganti dengan Personal Access Token (classic) Anda
-    };
-
-    // Fungsi utama penanganan antrean unggah massal
-    async function startBatchUpload(event) {
-        event.preventDefault();
-        
-        const satkerName = document.getElementById('selectSatkerBatch').value.trim();
-        const fileInput = document.getElementById('batchPdfFiles');
-        const files = fileInput.files;
-        const alertBox = document.getElementById('pdfBatchAlertBox');
-        const submitBtn = document.getElementById('pdfBatchSubmitBtn');
-        
-        alertBox.innerHTML = "";
-
-        if (!satkerName) {
-            alert("Mohon pilih Satuan Kerja terlebih dahulu!");
-            return;
-        }
-
-        if (files.length === 0) {
-            alert("Mohon pilih minimal satu file PDF!");
-            return;
-        }
-
-        submitBtn.disabled = true;
-        submitBtn.innerText = "Sedang Mengunggah Antrean...";
-
-        const progressContainer = document.getElementById('batchProgressContainer');
-        const statusMessage = document.getElementById('batchStatusMessage');
-        const progressBar = document.getElementById('batchProgressBar');
-        progressContainer.classList.remove('d-none');
-
-        let successCount = 0;
-        let failedCount = 0;
-        const totalFiles = files.length;
-
-        for (let i = 0; i < totalFiles; i++) {
-            let file = files[i];
-            let currentNumber = i + 1;
-            
-            statusMessage.innerText = `Mengunggah (${currentNumber}/${totalFiles}): ${file.name}`;
-            let percent = Math.round((currentNumber / totalFiles) * 100);
-            progressBar.style.width = percent + "%";
-
-            // Validasi Ukuran File (Maksimal 10 MB)
-            const maxSize = 10 * 1024 * 1024; 
-            if (file.size > maxSize) {
-                console.warn(`File ${file.name} ditolak karena ukurannya melebihi 10 MB.`);
-                failedCount++;
-                continue; 
-            }
-
-            try {
-                let fileUrl = await uploadSingleFileToGitHub(file, satkerName);
-                if (fileUrl) {
-                    successCount++;
-                } else {
-                    failedCount++;
-                }
-            } catch (error) {
-                console.error(`Gagal pada file ${file.name}:`, error);
-                failedCount++;
-            }
-
-            // Jeda waktu 1 detik antar file agar API stabil
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-
-        submitBtn.disabled = false;
-        submitBtn.innerText = "Proses Upload & Validasi Satker";
-        statusMessage.innerText = `Selesai! Berhasil: ${successCount}, Gagal/Ditolak (>10MB): ${failedCount}`;
-        alertBox.innerHTML = `<div class="alert alert-success">Proses unggah massal selesai!<br><b>Berhasil diunggah:</b> ${successCount}<br><b>Gagal / Lebih dari 10MB:</b> ${failedCount}</div>`;
+        })
+        .withFailureHandler(err => {
+          document.getElementById('pdfAlertBox').innerHTML = '<div class="alert alert-danger">Error: ' + err.message + '</div>';
+          btn.disabled = false;
+          btn.innerText = "Simpan & Tautkan ke Satker";
+        })
+        .simpanTautanSuratPersetujuan({ satker: satker, linkUrl: linkUrl });
     }
 
-    async function uploadSingleFileToGitHub(file, satkerName) {
-        const timestamp = new Date().toISOString().replace(/[-:]/g, "").split(".")[0];
-        const cleanFileName = file.name.replace(/[^a-zA-Z0-9_.-]/g, "_");
-        const filePath = `documents/${satkerName}_${timestamp}_${cleanFileName}`;
+    // Handler Penautan Dokumen Massal Perjanjian Kerja via URL Tautan / Folder
+    function handleTautanMassalSubmit(event) {
+      event.preventDefault();
+      var satker = document.getElementById('selectSatkerBatch').value;
+      var linkInput = document.getElementById('linkMassalInput').value;
+      var btn = document.getElementById('pdfBatchSubmitBtn');
 
-        const base64Content = await convertFileToBase64(file);
-        const url = `https://api.github.com/repos/${GITHUB_CONFIG.username}/${GITHUB_CONFIG.repo}/contents/${filePath}`;
+      btn.disabled = true;
+      btn.innerText = "Memproses & Mencocokkan...";
 
-        const payload = {
-            message: `Upload PDF Satker ${satkerName}: ${file.name}`,
-            content: base64Content,
-            branch: GITHUB_CONFIG.branch
-        };
-
-        const response = await fetch(url, {
-            method: "PUT",
-            headers: {
-                "Authorization": `token ${GITHUB_CONFIG.token}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload)
-        });
-
-        if (response.ok) {
-            return `https://${GITHUB_CONFIG.username}.github.io/${GITHUB_CONFIG.repo}/${filePath}`;
-        } else {
-            const err = await response.json();
-            throw new Error(err.message || "Gagal upload ke GitHub");
-        }
-    }
-
-    function convertFileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result.split(',')[1]);
-            reader.onerror = error => reject(error);
-        });
+      google.script.run
+        .withSuccessHandler(res => {
+          document.getElementById('pdfBatchAlertBox').innerHTML = '<div class="alert alert-success">' + res + '</div>';
+          document.getElementById('pdfBatchForm').reset();
+          btn.disabled = false;
+          btn.innerText = "🚀 Proses & Tautkan Otomatis";
+          initApp();
+        })
+        .withFailureHandler(err => {
+          document.getElementById('pdfBatchAlertBox').innerHTML = '<div class="alert alert-danger">Error: ' + err.message + '</div>';
+          btn.disabled = false;
+          btn.innerText = "🚀 Proses & Tautkan Otomatis";
+        })
+        .simpanTautanDokumenMassal({ satker: satker, linkInput: linkInput });
     }
 
     function sendChatAI() {
@@ -891,8 +803,8 @@
         var found = databasePegawaiCache.find(item => item.ni.toLowerCase() === lower || item.nama.toLowerCase().includes(lower));
         if (found) {
           reply = `📄 <b>Ditemukan Data Pegawai:</b><br>- <b>Nama:</b> ${found.nama}<br>- <b>NIP:</b> ${found.ni}<br>- <b>Jabatan:</b> ${found.jabatan}<br>- <b>Satker:</b> ${found.satker}<br>- <b>Status:</b> ${found.isInputed ? 'Sudah Input ✅' : 'Belum Input ❌'}`;
-        } else if (lower.includes("upload") || lower.includes("pdf")) {
-          reply = "For upload PDF massal pastikan format nama file NIP_Nama.pdf dan maksimal 50 file per batch.";
+        } else if (lower.includes("upload") || lower.includes("tautan") || lower.includes("folder")) {
+          reply = "Untuk penautan dokumen massal, buat folder Google Drive, beri nama file NIP_Nama.pdf, atur izin folder ke 'Anyone with the link', lalu tempel tautan foldernya.";
         } else {
           reply = "Silakan tanyakan seputar alur aplikasi atau ketik NIP/Nama pegawai untuk melihat kartu data instan.";
         }
