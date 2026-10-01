@@ -1,519 +1,489 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
   <base target="_top">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manajemen Data Pegawai & Kontrak - Helpdesk</title>
-  <!-- Tailwind CSS CDN -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aplikasi Manajemen Data Pegawai & Kontrak</title>
+  <!-- Bootstrap 5 CSS untuk Tampilan Utama -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Tailwind CSS khusus untuk Tampilan Helpdesk Modern -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome for modern icons -->
+  <!-- FontAwesome untuk Ikon Modern -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Pustaka SheetJS untuk Ekspor Excel (.xlsx) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    .custom-tab-pane { display: none; }
-    .custom-tab-pane.active { display: block; }
-    @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+    .custom-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+    .custom-tabs .nav-item { flex: 1 1 auto; text-align: center; }
+    .custom-tabs .nav-link {
+      color: #495057 !important; background-color: #e9ecef; border: 1px solid #ced4da;
+      font-weight: 600; width: 100%; font-size: 12px; padding: 8px 10px; border-radius: 6px;
+    }
+    .custom-tabs .nav-link.active { color: #fff !important; background-color: #0d6efd !important; border-color: #0d6efd; }
+    .announcement-bar {
+      background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;
+      border-radius: 6px; padding: 10px 15px; margin-bottom: 20px; font-weight: 600; overflow: hidden; white-space: nowrap;
+    }
     .running-text { display: inline-block; animation: marquee 25s linear infinite; }
+    @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+    .countdown-badge { background-color: #dc3545; color: white; padding: 2px 8px; border-radius: 4px; font-family: monospace; }
+    
+    /* Style khusus agar scope Tailwind di helpdesk tidak merusak Bootstrap di luar */
+    .helpdesk-scope { font-family: 'Inter', sans-serif; }
+    .help-tab-content { display: none; }
+    .help-tab-content.active { display: block; }
+
+    @media print {
+      body * { visibility: hidden; }
+      #printableArea, #printableArea * { visibility: visible; }
+      #printableArea { position: absolute; left: 0; top: 0; width: 100%; }
+    }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col" onload="initApp()">
-
-  <!-- Top Navigation Bar (Konsisten dengan Aplikasi Utama) -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-200">
-          <i class="fa-solid fa-address-card"></i>
-        </div>
-        <div>
-          <h1 class="text-base font-bold text-slate-900 leading-tight">Manajemen Data Pegawai & Kontrak</h1>
-          <p class="text-xs text-slate-500">Sistem Layanan Terpadu</p>
-        </div>
-      </div>
-
-      <!-- Quick Action & Refresh -->
-      <div class="flex items-center space-x-3">
-        <button onclick="resetAplikasiTotal()" class="inline-flex items-center px-3.5 py-2 text-xs font-medium rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
-          <i class="fa-solid fa-rotate mr-2 text-slate-500"></i> Refresh Tampilan
-        </button>
-        <div class="relative inline-block text-left">
-          <button onclick="toggleDropdown()" class="inline-flex items-center px-4 py-2 text-xs font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition shadow-sm">
-            <i class="fa-solid fa-bars-progress mr-2"></i> Menu Navigasi <i class="fa-solid fa-chevron-down ml-2 text-[10px]"></i>
-          </button>
-          <div id="actionDropdown" class="hidden absolute right-0 mt-2 w-64 rounded-xl bg-white shadow-xl border border-slate-100 py-1 z-50">
-            <button onclick="switchMainTab('dashboardArea')" class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-600 flex items-center"><i class="fa-solid fa-chart-pie mr-2.5 w-4"></i> Dashboard Monitoring</button>
-            <button onclick="switchMainTab('single')" class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-600 flex items-center"><i class="fa-solid fa-user-plus mr-2.5 w-4"></i> Input Manual Per-nama</button>
-            <button onclick="switchMainTab('import')" class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-600 flex items-center"><i class="fa-solid fa-file-excel mr-2.5 w-4"></i> Input Massal (Import Excel)</button>
-            <button onclick="switchMainTab('pdfUpload')" class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-600 flex items-center"><i class="fa-solid fa-link mr-2.5 w-4"></i> Upload Surat Usulan</button>
-            <button onclick="switchMainTab('printArea')" class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-600 flex items-center"><i class="fa-solid fa-filter mr-2.5 w-4"></i> Cetak & Filter Data</button>
-            <button onclick="switchMainTab('batchUpload')" class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-600 flex items-center"><i class="fa-solid fa-folder-open mr-2.5 w-4"></i> Upload Perjanjian Kerja</button>
-            <button onclick="switchMainTab('helpdeskArea')" class="w-full text-left px-4 py-2.5 text-xs text-blue-600 bg-blue-50 font-bold flex items-center"><i class="fa-solid fa-headset mr-2.5 w-4"></i> Helpdesk & Bantuan</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Content Container -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full">
-    
-    <!-- Announcement Bar -->
-    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 mb-6 font-semibold text-xs overflow-hidden whitespace-nowrap shadow-sm">
-      <div class="running-text">
-        ⚠️ <b>Penting!</b> Batas Akhir Pengusulan dan Pengisian pada tanggal 6 Oktober 2026 
-        <span id="countdownDisplay" class="bg-red-600 text-white px-2 py-0.5 rounded ml-2 font-mono">Memuat Waktu...</span> ⏰
-      </div>
-    </div>
-
-    <div class="tab-content-container">
-
-      <!-- TAB 0: DASHBOARD MONITORING -->
-      <div class="custom-tab-pane" id="dashboardArea">
-        <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center"><i class="fa-solid fa-chart-pie mr-2 text-blue-600"></i> Dashboard Monitoring & Statistik</h3>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-600">
-            <span class="text-xs font-bold text-slate-400 uppercase">Total Pegawai PPPK PW</span>
-            <h3 class="text-2xl font-bold text-slate-800 mt-1" id="statTarget">0</h3>
-          </div>
-          <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-emerald-500">
-            <span class="text-xs font-bold text-slate-400 uppercase">Sudah Input NIP</span>
-            <h3 class="text-2xl font-bold text-emerald-600 mt-1" id="statInput">0</h3>
-          </div>
-          <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500">
-            <span class="text-xs font-bold text-slate-400 uppercase">Surat Persetujuan Upload</span>
-            <h3 class="text-2xl font-bold text-amber-600 mt-1" id="statSurat">0</h3>
-          </div>
-          <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-rose-500">
-            <span class="text-xs font-bold text-slate-400 uppercase">Perjanjian Kerja Upload</span>
-            <h3 class="text-2xl font-bold text-rose-600 mt-1" id="statKontrak">0</h3>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-          <h4 class="text-sm font-bold text-slate-800 mb-3">Rincian Progres Per Satuan Kerja</h4>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr class="bg-slate-800 text-white text-center">
-                  <th class="p-2.5">Satuan Kerja</th>
-                  <th class="p-2.5">Target NIP</th>
-                  <th class="p-2.5">Sudah Input</th>
-                  <th class="p-2.5">Surat Persetujuan</th>
-                  <th class="p-2.5">Perjanjian Kerja</th>
-                </tr>
-              </thead>
-              <tbody id="dashboardSatkerTable" class="divide-y divide-slate-100">
-                <tr><td colspan="5" class="text-center p-4 text-slate-500">Memuat data dashboard...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB 1: Input Manual Per-nama -->
-      <div class="custom-tab-pane" id="single">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 max-w-3xl mx-auto">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="text-base font-bold text-blue-600" id="formTitle">Formulir Input Data Pegawai</h3>
-            <button type="button" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700" onclick="resetFormManual()">🔄 Bersihkan Form</button>
-          </div>
-          <div id="loadingStatus" class="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-xl text-xs mb-4">⏳ Memuat database pegawai dari sheet config...</div>
-          <div id="modeEditAlert" class="hidden bg-amber-50 border border-amber-200 text-amber-900 p-3 rounded-xl text-xs font-bold mb-4">⚠️ NIP ini sudah pernah diinput. Anda berada dalam Mode Edit (Perubahan Otomatis).</div>
-          
-          <form id="pegawaiForm" onsubmit="handleFormSubmit(event)" class="space-y-4 text-xs">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">NI PPPK / NIP / Nomor Identitas</label>
-              <input type="text" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500" id="niPppk" list="niOptions" placeholder="Ketik NIP atau pilih..." oninput="isiOtomatisOlehNi(this.value)" onchange="isiOtomatisOlehNi(this.value)" required>
-              <datalist id="niOptions"></datalist>
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Nama Pegawai</label>
-              <input type="text" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500" id="namaPegawai" list="namaOptions" placeholder="Ketik nama atau pilih..." oninput="isiOtomatisOlehNama(this.value)" onchange="isiOtomatisOlehNama(this.value)" required>
-              <datalist id="namaOptions"></datalist>
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Jenis Kelamin</label>
-              <input type="text" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500" id="jenisKelamin" placeholder="Laki-Laki / Perempuan" required>
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Tempat, Tanggal Lahir</label>
-              <input type="text" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500" id="ttl" placeholder="Contoh: Jakarta, 22 September 1996" required>
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Golongan</label>
-              <input type="text" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500" id="golongan" placeholder="Contoh: III/a atau 0" required>
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Nama Jabatan</label>
-              <input type="text" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500" id="namaJabatan" required>
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Nama Satuan Kerja (Satker)</label>
-              <input class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500" list="satkerOptionsInput" id="namaSatker" placeholder="Pilih Satuan Kerja..." required>
-              <datalist id="satkerOptionsInput"></datalist>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Tanggal Mulai Kontrak</label>
-                <input type="date" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl" id="tglMulai" value="2026-11-01" required>
-              </div>
-              <div>
-                <label class="block font-bold text-slate-700 mb-1">Tanggal Berakhir Kontrak</label>
-                <input type="date" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl" id="tglAkhir" value="2027-10-31" required>
-              </div>
-            </div>
-            <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-sm" id="submitBtn">Simpan Data</button>
-          </form>
-          <div id="alertBox" class="mt-4"></div>
-        </div>
-      </div>
-
-      <!-- TAB 2: Input Massal (Import Excel) -->
-      <div class="custom-tab-pane" id="import">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 max-w-2xl mx-auto text-xs space-y-4">
-          <h3 class="text-base font-bold text-emerald-600">Import Data Massal Excel (.xlsx)</h3>
-          <p class="text-slate-500">Unggah file berformat <b>Excel (.xlsx)</b> asli untuk memasukkan banyak data sekaligus.</p>
-          <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl text-blue-900">
-            <span class="font-bold">Belum punya templat Excel?</span><br>
-            Unduh file contoh format Excel di bawah ini, lalu isi datanya.<br>
-            <button type="button" class="mt-2 px-3.5 py-2 bg-white text-blue-600 border border-blue-300 font-semibold rounded-lg hover:bg-blue-50" onclick="downloadExcelTemplate()">📥 Unduh Templat Excel (.xlsx)</button>
-          </div>
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">Pilih File Excel / CSV</label>
-            <input type="file" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl" id="excelFile" accept=".xlsx, .xls, .csv">
-          </div>
-          <button type="button" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition shadow-sm" id="importBtn" onclick="handleImportExcel()">Proses Import Data</button>
-          <div id="importAlertBox"></div>
-        </div>
-      </div>
-
-      <!-- TAB 3: UPLOAD SURAT PERSETUJUAN -->
-      <div class="custom-tab-pane" id="pdfUpload">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 max-w-2xl mx-auto text-xs space-y-4">
-          <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-900 leading-relaxed">
-            <strong>💡 Panduan Upload Surat Usulan:</strong><br>
-            - Gabung Dokumen Surat Usulan dan Surat Pernyataan menjadi satu file PDF ke Google Drive.<br>
-            - Atur akses berbagi menjadi <b>"Siapa saja yang memiliki tautan" (Anyone with the link)</b>.<br>
-            - Salin tautan dan tempelkan di bawah ini.
-          </div>
-          <h3 class="text-base font-bold text-rose-600">Penautan Dokumen Surat Persetujuan Berdasarkan Satker</h3>
-          <form id="pdfForm" onsubmit="handleTautanSuratSubmit(event)" class="space-y-4">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Satuan Kerja (Satker)</label>
-              <input class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl" list="satkerOptionsPdf" id="selectSatkerPdf" placeholder="Pilih Satuan Kerja..." required>
-              <datalist id="satkerOptionsPdf"></datalist>
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Tempel Tautan Google Drive (URL Surat Persetujuan PDF)</label>
-              <input type="url" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl" id="linkSuratPersetujuan" placeholder="https://drive.google.com/file/d/.../view" required>
-            </div>
-            <button type="submit" class="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition shadow-sm" id="pdfSubmitBtn">Simpan & Tautkan ke Satker</button>
-          </form>
-          <div id="pdfAlertBox"></div>
-        </div>
-      </div>
-
-      <!-- TAB 4: CETAK & FILTER -->
-      <div class="custom-tab-pane" id="printArea">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 text-xs space-y-4">
-          <h3 class="text-base font-bold text-slate-900">Pencarian, Filter & Cetak Data Pegawai</h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Filter Satuan Kerja</label>
-              <input class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl" list="satkerOptionsCetak" id="filterSatker" placeholder="Pilih Satker..." oninput="filterDataCetak()" onchange="filterDataCetak()">
-              <datalist id="satkerOptionsCetak"></datalist>
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Cari Nama / NIP</label>
-              <input type="text" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl" id="filterKeyword" placeholder="Ketik nama atau NI PPPK..." onkeyup="filterDataCetak()">
-            </div>
-            <div class="flex items-end gap-2">
-              <button type="button" class="w-1/2 py-2 bg-slate-700 hover:bg-slate-800 text-white font-bold rounded-xl" onclick="window.print()">🖨️ Cetak</button>
-              <button type="button" class="w-1/2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl" onclick="exportTableToExcel()">📊 Export</button>
-            </div>
-          </div>
-          <div id="printableArea" class="mt-4 pt-4 border-t">
-            <div class="text-center mb-4">
-              <h5 class="font-bold uppercase text-sm" id="judulCetak">Daftar Nominatif Pegawai Pemerintah dengan Perjanjian Kerja Paruh Waktu</h5>
-              <hr class="my-2">
-            </div>
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse" id="tabelNominatif">
-                <thead>
-                  <tr class="bg-slate-800 text-white text-[11px] text-center">
-                    <th class="p-2">NO.</th><th class="p-2">NI PPPK</th><th class="p-2">NAMA PEGAWAI</th><th class="p-2">JK</th>
-                    <th class="p-2">TTL</th><th class="p-2">GOL</th><th class="p-2">JABATAN</th><th class="p-2">SATKER</th>
-                    <th class="p-2">MULAI KONTRAK</th><th class="p-2">AKHIR KONTRAK</th><th class="p-2">SURAT</th><th class="p-2">KONTRAK</th>
-                  </tr>
-                </thead>
-                <tbody id="tabelHasilCetak" class="divide-y divide-slate-100">
-                  <tr><td colspan="12" class="text-center p-4 text-slate-500">Silakan pilih filter atau ketik pencarian.</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB 5: UPLOAD MASSAL PERJANJIAN KERJA -->
-      <div class="custom-tab-pane" id="batchUpload">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 max-w-2xl mx-auto text-xs space-y-4">
-          <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl text-blue-900 leading-relaxed">
-            📌 <b>Panduan Tautan Folder:</b><br>
-            - Buat Folder Google Drive khusus Satker, beri nama file <code>NIP_NamaPanggilan.pdf</code>.<br>
-            - Atur izin foldernya menjadi <b>Anyone with the link (Viewer)</b>, lalu tempel tautannya di sini.
-          </div>
-          <h3 class="text-base font-bold text-blue-600">Penautan Dokumen Massal Perjanjian Kerja</h3>
-          <form id="pdfBatchForm" onsubmit="handleTautanMassalSubmit(event)" class="space-y-4">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Filter Satuan Kerja</label>
-              <input class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl" list="satkerOptionsBatch" id="selectSatkerBatch" placeholder="Pilih Satker..." required>
-              <datalist id="satkerOptionsBatch"></datalist>
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">Tempel Tautan Folder Google Drive</label>
-              <input type="url" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl" id="linkMassalInput" placeholder="https://drive.google.com/drive/folders/..." required>
-            </div>
-            <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-sm" id="pdfBatchSubmitBtn">🚀 Proses & Tautkan Otomatis</button>
-          </form>
-          <div id="pdfBatchAlertBox"></div>
-        </div>
-      </div>
-
-      <!-- TAB 6: HELPDESK & BANTUAN (TAMPILAN MODERN MINIMALIS YANG DIMINTA) -->
-      <div class="custom-tab-pane active" id="helpdeskArea">
+<body class="bg-light" onload="initApp()">
+  <div class="container-fluid my-4 px-4">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom p-3">
         
-        <!-- Header Helpdesk Section -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 pb-4 border-b border-slate-200">
-            <div>
-                <h2 class="text-xl font-bold text-slate-900 flex items-center">
-                    <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mr-3 text-sm">
-                        <i class="fa-solid fa-headset"></i>
-                    </span>
-                    Pusat Bantuan & Layanan Helpdesk
-                </h2>
-                <p class="text-sm text-slate-500 mt-1">Temukan panduan cepat, mulai live chat, atau kirimkan tiket kendala Anda di sini.</p>
-            </div>
-            <div class="mt-4 md:mt-0 flex gap-2">
-                <button onclick="toggleAdminPanel()" class="inline-flex items-center px-4 py-2 text-xs font-semibold rounded-lg text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition shadow-sm">
-                    <i class="fa-solid fa-shield-halved mr-2 text-amber-500"></i> Panel Admin Response
-                </button>
-            </div>
-        </div>
-
-        <!-- Admin Response Panel (Hidden by default, password protected) -->
-        <div id="adminPanel" class="hidden mb-6 bg-white rounded-2xl shadow-sm border border-red-200 overflow-hidden">
-          <div class="bg-red-600 text-white px-5 py-3 flex justify-between items-center text-xs font-bold">
-            <span>🛠️ Panel Admin: Kelola & Respon Semua Tiket</span>
-            <button class="px-2.5 py-1 bg-white text-red-600 rounded text-[11px]" onclick="loadAdminTickets()">🔄 Muat Ulang</button>
-          </div>
-          <div class="p-4 overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr class="bg-slate-100 border-b text-slate-700">
-                  <th class="p-2.5">Waktu</th><th class="p-2.5">Pelapor / Kategori</th><th class="p-2.5">Pesan Kendala</th><th class="p-2.5">Status</th><th class="p-2.5">Balasan Admin</th><th class="p-2.5">Aksi</th>
-                </tr>
-              </thead>
-              <tbody id="adminTicketTable" class="divide-y divide-slate-100">
-                <tr><td colspan="6" class="text-center p-3 text-slate-500">Memuat tiket...</td></tr>
-              </tbody>
-            </table>
+        <!-- Baris Pengumuman / Running Text -->
+        <div class="announcement-bar">
+          <div class="running-text">
+            ⚠️ <b>Penting!</b> Batas Akhir Pengusulan dan Pengisian pada tanggal 6 Oktober 2026 
+            <span id="countdownDisplay" class="countdown-badge">Memuat Waktu...</span> ⏰
           </div>
         </div>
 
-        <!-- Interactive Helpdesk Tabs -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="flex border-b border-slate-200 bg-slate-50/50 px-4 pt-3 space-x-2">
-                <button onclick="switchHelpTab('faq')" id="tab-btn-faq" class="help-tab-btn px-5 py-3 text-sm font-semibold rounded-t-xl border-b-2 border-blue-600 text-blue-600 bg-white transition flex items-center">
-                    <i class="fa-solid fa-circle-question mr-2"></i> Panduan FAQ
-                </button>
-                <button onclick="switchHelpTab('chat')" id="tab-btn-chat" class="help-tab-btn px-5 py-3 text-sm font-semibold rounded-t-xl border-b-2 border-transparent text-slate-600 hover:text-blue-600 transition flex items-center">
-                    <i class="fa-solid fa-comments mr-2"></i> Live Chat Asisten
-                    <span class="ml-2 px-2 py-0.5 text-[10px] bg-emerald-100 text-emerald-700 rounded-full font-bold">Online</span>
-                </button>
-                <button onclick="switchHelpTab('ticket')" id="tab-btn-ticket" class="help-tab-btn px-5 py-3 text-sm font-semibold rounded-t-xl border-b-2 border-transparent text-slate-600 hover:text-blue-600 transition flex items-center">
-                    <i class="fa-solid fa-ticket mr-2"></i> Buat & Riwayat Tiket
-                </button>
-            </div>
-
-            <div class="p-6">
-                <!-- HELP TAB 1: FAQ & PANDUAN -->
-                <div id="help-tab-faq" class="help-tab-content space-y-4">
-                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-                        <div>
-                            <h3 class="text-base font-bold text-slate-900">Pertanyaan yang Sering Diajukan</h3>
-                            <p class="text-xs text-slate-500">Cari solusi kilat untuk pertanyaan seputar penggunaan aplikasi.</p>
-                        </div>
-                        <div class="relative w-full sm:w-72">
-                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-xs text-slate-400"></i>
-                            <input type="text" id="faqSearch" onkeyup="filterFaq()" placeholder="Cari topik atau kata kunci..." class="w-full pl-10 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition">
-                        </div>
-                    </div>
-
-                    <div class="space-y-3" id="faqContainer">
-                        <div class="faq-item border border-slate-200 rounded-xl overflow-hidden transition hover:border-blue-300">
-                            <button onclick="toggleAccordion(1)" class="w-full px-5 py-4 text-left font-medium text-sm text-slate-800 flex justify-between items-center bg-white hover:bg-slate-50 transition">
-                                <span class="flex items-center"><i class="fa-solid fa-circle-question text-blue-600 mr-3 text-xs"></i>1. Bagaimana cara melakukan input data pegawai baru?</span>
-                                <i id="icon-1" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
-                            </button>
-                            <div id="content-1" class="hidden px-5 py-4 bg-slate-50/50 border-t border-slate-100 text-xs text-slate-600 space-y-2">
-                                <p>Buka menu <b>Input Manual Per-nama</b>, lalu ketik NIP atau Nama pegawai. Sistem akan otomatis menarik data dasar dari sheet <i>config</i>. Jika NIP sudah terdaftar, form otomatis masuk ke <i>Mode Edit</i> untuk memperbarui data.</p>
-                            </div>
-                        </div>
-
-                        <div class="faq-item border border-slate-200 rounded-xl overflow-hidden transition hover:border-blue-300">
-                            <button onclick="toggleAccordion(2)" class="w-full px-5 py-4 text-left font-medium text-sm text-slate-800 flex justify-between items-center bg-white hover:bg-slate-50 transition">
-                                <span class="flex items-center"><i class="fa-solid fa-circle-question text-blue-600 mr-3 text-xs"></i>2. Bagaimana aturan penautan dokumen massal Perjanjian Kerja?</span>
-                                <i id="icon-2" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
-                            </button>
-                            <div id="content-2" class="hidden px-5 py-4 bg-slate-50/50 border-t border-slate-100 text-xs text-slate-600 space-y-2">
-                                <p>Buat folder Google Drive untuk Satker, pastikan nama file berformat <b>NIP_Nama.pdf</b> (contoh: <code>199804012026011001_fulan.pdf</code>), atur izin folder ke <i>Anyone with the link</i>, lalu tempel tautan foldernya.</p>
-                            </div>
-                        </div>
-
-                        <div class="faq-item border border-slate-200 rounded-xl overflow-hidden transition hover:border-blue-300">
-                            <button onclick="toggleAccordion(3)" class="w-full px-5 py-4 text-left font-medium text-sm text-slate-800 flex justify-between items-center bg-white hover:bg-slate-50 transition">
-                                <span class="flex items-center"><i class="fa-solid fa-circle-question text-blue-600 mr-3 text-xs"></i>3. Kapan batas akhir pengisian dan pengusulan data?</span>
-                                <i id="icon-3" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
-                            </button>
-                            <div id="content-3" class="hidden px-5 py-4 bg-slate-50/50 border-t border-slate-100 text-xs text-slate-600 space-y-2">
-                                <p>Batas akhir pengusulan dan pengisian seluruh data serta kelengkapan dokumen adalah tanggal <b>6 Oktober 2026 pukul 23:59 WIB</b>.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- HELP TAB 2: LIVE CHAT ASISTEN -->
-                <div id="help-tab-chat" class="help-tab-content hidden">
-                    <div class="max-w-2xl mx-auto border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 shadow-inner flex flex-col h-[400px]">
-                        <div class="bg-white px-5 py-3 border-b border-slate-200 flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div class="relative">
-                                    <div class="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs">AI</div>
-                                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
-                                </div>
-                                <div>
-                                    <h4 class="text-xs font-bold text-slate-900">Asisten Virtual & Pencarian Pegawai</h4>
-                                    <p class="text-[10px] text-emerald-600 font-medium">Aktif • Ketik NIP atau Nama untuk cek data instan</p>
-                                </div>
-                            </div>
-                            <span class="text-[10px] bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">Online</span>
-                        </div>
-
-                        <div id="chatContainer" class="p-4 flex-grow overflow-y-auto space-y-3">
-                            <div class="flex items-start space-x-2">
-                                <div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">AI</div>
-                                <div class="bg-white p-3 rounded-2xl rounded-tl-sm shadow-sm border border-slate-200 text-xs text-slate-700 max-w-[80%]">
-                                    Halo! Ketik pertanyaan atau NIP/Nama pegawai untuk mencari data instan.
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="p-3 bg-white border-t border-slate-200 flex items-center space-x-2">
-                            <input type="text" id="chatInput" onkeypress="handleChatKey(event)" placeholder="Ketik pertanyaan atau NIP/Nama pegawai..." class="flex-grow px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition">
-                            <button onclick="sendChatAI()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition shadow-sm flex items-center">
-                                <i class="fa-solid fa-paper-plane"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- HELP TAB 3: BUAT & RIWAYAT TIKET -->
-                <div id="help-tab-ticket" class="help-tab-content hidden space-y-6">
-                    <div>
-                        <h3 class="text-base font-bold text-slate-900">Formulir Pelaporan Kendala</h3>
-                        <p class="text-xs text-slate-500">Isi form di bawah ini jika kendala Anda tidak terselesaikan di FAQ atau Live Chat.</p>
-                    </div>
-
-                    <form id="ticketForm" onsubmit="handleTicketSubmit(event)" class="grid grid-cols-1 md:grid-cols-2 gap-5 bg-slate-50 p-6 rounded-2xl border border-slate-200">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nama Pelapor / Asal Satker <span class="text-red-500">*</span></label>
-                            <input type="text" id="ticketNama" required placeholder="Nama & Asal Satker..." oninput="simpanNamaPelapor(this.value)" class="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Kategori Kendala <span class="text-red-500">*</span></label>
-                            <select id="ticketKategori" class="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition">
-                                <option value="Akses Tautan Gagal">Akses Tautan / Folder Gagal</option>
-                                <option value="Data Pegawai Tidak Sesuai">Data Pegawai Tidak Sesuai</option>
-                                <option value="Error Saat Input Massal (Import Excel)">Error Saat Input Massal (Import Excel)</option>
-                                <option value="Lainnya">Lainnya</option>
-                            </select>
-                        </div>
-
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Detail Keterangan <span class="text-red-500">*</span></label>
-                            <textarea id="ticketPesan" rows="3" required placeholder="Jelaskan kendala secara detail..." class="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition"></textarea>
-                        </div>
-
-                        <div class="md:col-span-2 flex justify-between items-center">
-                            <div id="ticketAlertBox" class="text-xs"></div>
-                            <button type="submit" id="ticketBtn" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition shadow-sm flex items-center">
-                                <i class="fa-solid fa-paper-plane mr-2"></i> Kirim Tiket Laporan
-                            </button>
-                        </div>
-                    </form>
-
-                    <!-- Ticket History List -->
-                    <div class="mt-8">
-                        <div class="flex justify-between items-center mb-3">
-                            <h4 class="text-sm font-bold text-slate-900">Riwayat Laporan Anda</h4>
-                            <div class="space-x-2">
-                                <button class="px-3 py-1 text-xs bg-blue-50 text-blue-600 font-semibold rounded-lg border border-blue-200 hover:bg-blue-100" onclick="bukaCekHistoryModal()">🔍 Cek Histori</button>
-                                <button class="px-3 py-1 text-xs bg-slate-100 text-slate-600 font-semibold rounded-lg hover:bg-slate-200" onclick="clearTicketForm()">🔄 Reset</button>
-                            </div>
-                        </div>
-                        <div class="border border-slate-200 rounded-xl overflow-hidden bg-white p-4">
-                            <div id="ticketHistoryList" class="text-xs space-y-3">
-                                <p class="text-slate-500 text-center py-2">Masukkan nama pelapor untuk melihat histori.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="text-dark fw-bold mb-0">Manajemen Data Pegawai & Kontrak</h4>
+          <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" onclick="resetAplikasiTotal()">🔄 Refresh Tampilan</button>
         </div>
 
+        <!-- TAB NAVIGASI UTAMA (GAYA ASLI ANDA) -->
+        <ul class="nav nav-pills custom-tabs" id="myTab" role="tablist">
+          <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dashboardArea" onclick="loadDashboardData()">📊 Dashboard Monitoring</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#single" onclick="loadSatkerDatalists()">Input Manual Per-nama</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#import">Input Massal (Import Excel)</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pdfUpload" onclick="loadSatkerDatalists()">Upload Surat Usulan</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#printArea" onclick="loadSatkerDatalists(); filterDataCetak();">Cetak & Filter</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#batchUpload" onclick="loadSatkerDatalists()">Upload Perjanjian Kerja</button></li>
+          <!-- TOMBOL MENU HELPDESK -->
+          <li class="nav-item"><button class="nav-link bg-info text-white fw-bold" data-bs-toggle="tab" data-bs-target="#helpdeskArea" onclick="loadTicketHistory()">🛟 Helpdesk & Bantuan</button></li>
+        </ul>
       </div>
+      
+      <div class="card-body p-4">
+        <div class="tab-content">
+          
+          <!-- TAB 0: DASHBOARD MONITORING -->
+          <div class="tab-pane fade show active" id="dashboardArea" role="tabpanel">
+            <h5 class="fw-bold mb-3 text-primary">📊 Dashboard Monitoring & Statistik</h5>
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                <div class="p-3 border rounded bg-white shadow-sm border-primary border-start-0 border-top-0 border-bottom-0 border-4">
+                  <span class="text-muted small fw-bold">TOTAL PEGAWAI PPPK PW</span>
+                  <h3 class="fw-bold mt-1" id="statTarget">0</h3>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="p-3 border rounded bg-white shadow-sm border-success border-start-0 border-top-0 border-bottom-0 border-4">
+                  <span class="text-muted small fw-bold">SUDAH INPUT NIP</span>
+                  <h3 class="fw-bold mt-1 text-success" id="statInput">0</h3>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="p-3 border rounded bg-white shadow-sm border-warning border-start-0 border-top-0 border-bottom-0 border-4">
+                  <span class="text-muted small fw-bold">SURAT PERSETUJUAN UPLOAD</span>
+                  <h3 class="fw-bold mt-1 text-warning" id="statSurat">0</h3>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="p-3 border rounded bg-white shadow-sm border-danger border-start-0 border-top-0 border-bottom-0 border-4">
+                  <span class="text-muted small fw-bold">PERJANJIAN KERJA UPLOAD</span>
+                  <h3 class="fw-bold mt-1 text-danger" id="statKontrak">0</h3>
+                </div>
+              </div>
+            </div>
 
-    </div>
-  </main>
+            <div class="card p-3 shadow-sm">
+              <h6 class="fw-bold mb-3">Rincian Progres Per Satuan Kerja</h6>
+              <div class="table-responsive">
+                <table class="table table-bordered table-sm align-middle" style="font-size: 12px;">
+                  <thead class="table-dark text-center">
+                    <tr><th>Satuan Kerja</th><th>Target NIP</th><th>Sudah Input</th><th>Surat Persetujuan</th><th>Perjanjian Kerja</th></tr>
+                  </thead>
+                  <tbody id="dashboardSatkerTable">
+                    <tr><td colspan="5" class="text-center">Memuat data dashboard...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
 
-  <!-- Modal Cek Histori -->
-  <div id="historyModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl space-y-4">
-      <div class="flex justify-between items-center">
-        <h6 class="font-bold text-sm text-slate-900">Pilih Nama Pelapor Tersimpan</h6>
-        <button onclick="tutupCekHistoryModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+          <!-- TAB 1: Input Manual Per-nama -->
+          <div class="tab-pane fade" id="single" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="text-primary fw-bold mb-0" id="formTitle">Formulir Input Data Pegawai</h5>
+              <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" onclick="resetFormManual()">🔄 Refresh / Bersihkan Form</button>
+            </div>
+            <div id="loadingStatus" class="alert alert-warning py-2 mb-3" style="font-size: 13px;">⏳ Memuat database pegawai dari sheet config...</div>
+            <div id="modeEditAlert" class="alert alert-warning py-2 mb-3 d-none fw-bold" style="font-size: 13px;">⚠️ NIP ini sudah pernah diinput. Anda berada dalam <b>Mode Edit</b>.</div>
+            
+            <form id="pegawaiForm" onsubmit="handleFormSubmit(event)">
+              <div class="mb-3">
+                <label class="form-label fw-bold">NI PPPK / NIP / Nomor Identitas</label>
+                <input type="text" class="form-control" id="niPppk" list="niOptions" placeholder="Ketik NIP atau pilih..." oninput="isiOtomatisOlehNi(this.value)" required>
+                <datalist id="niOptions"></datalist>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Nama Pegawai</label>
+                <input type="text" class="form-control" id="namaPegawai" list="namaOptions" placeholder="Ketik nama atau pilih..." oninput="isiOtomatisOlehNama(this.value)" required>
+                <datalist id="namaOptions"></datalist>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Jenis Kelamin</label>
+                <input type="text" class="form-control" id="jenisKelamin" placeholder="Laki-Laki / Perempuan" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Tempat, Tanggal Lahir</label>
+                <input type="text" class="form-control" id="ttl" placeholder="Contoh: Jakarta, 22 September 1996" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Golongan</label>
+                <input type="text" class="form-control" id="golongan" placeholder="Contoh: III/a" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Nama Jabatan</label>
+                <input type="text" class="form-control" id="namaJabatan" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Nama Satuan Kerja (Satker)</label>
+                <input class="form-control" list="satkerOptionsInput" id="namaSatker" placeholder="Pilih Satker..." required>
+                <datalist id="satkerOptionsInput"></datalist>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3"><label class="form-label fw-bold">Tanggal Mulai</label><input type="date" class="form-control" id="tglMulai" value="2026-11-01" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label fw-bold">Tanggal Berakhir</label><input type="date" class="form-control" id="tglAkhir" value="2027-10-31" required></div>
+              </div>
+              <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" id="submitBtn">Simpan Data</button>
+            </form>
+            <div id="alertBox" class="mt-3"></div>
+          </div>
+
+          <!-- TAB 2: Input Massal (Import Excel) -->
+          <div class="tab-pane fade" id="import" role="tabpanel">
+            <h5 class="mb-3 text-success fw-bold">Import Data Massal Excel (.xlsx)</h5>
+            <div class="alert alert-info p-3 mb-3">
+              <span class="fw-bold">Belum punya templat Excel?</span><br>
+              <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="downloadExcelTemplate()">📥 Unduh Templat Excel (.xlsx)</button>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Pilih File Excel / CSV</label>
+              <input type="file" class="form-control" id="excelFile" accept=".xlsx, .xls, .csv">
+            </div>
+            <button type="button" class="btn btn-success w-100 py-2 fw-bold" id="importBtn" onclick="handleImportExcel()">Proses Import Data</button>
+            <div id="importAlertBox" class="mt-3"></div>
+          </div>
+
+          <!-- TAB 3: UPLOAD SURAT PERSETUJUAN -->
+          <div class="tab-pane fade" id="pdfUpload" role="tabpanel">
+            <div class="alert alert-warning mb-3" style="font-size: 13px;">
+              <strong>💡 Panduan:</strong> Atur akses berbagi file Drive menjadi <b>"Anyone with the link"</b>, lalu salin tautannya ke sini.
+            </div>
+            <form id="pdfForm" onsubmit="handleTautanSuratSubmit(event)">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Satuan Kerja (Satker)</label>
+                <input class="form-control" list="satkerOptionsPdf" id="selectSatkerPdf" placeholder="Pilih Satker..." required>
+                <datalist id="satkerOptionsPdf"></datalist>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Tempel Tautan Google Drive (URL Surat PDF)</label>
+                <input type="url" class="form-control" id="linkSuratPersetujuan" placeholder="https://drive.google.com/file/d/.../view" required>
+              </div>
+              <button type="submit" class="btn btn-danger w-100 py-2 fw-bold" id="pdfSubmitBtn">Simpan & Tautkan ke Satker</button>
+            </form>
+            <div id="pdfAlertBox" class="mt-3"></div>
+          </div>
+
+          <!-- TAB 4: CETAK & FILTER -->
+          <div class="tab-pane fade" id="printArea" role="tabpanel">
+            <h5 class="mb-3 text-dark fw-bold">Pencarian, Filter & Cetak Data Pegawai</h5>
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label class="form-label fw-bold">Filter Satuan Kerja</label>
+                <input class="form-control" list="satkerOptionsCetak" id="filterSatker" placeholder="Pilih Satker..." oninput="filterDataCetak()">
+                <datalist id="satkerOptionsCetak"></datalist>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold">Cari Nama / NIP</label>
+                <input type="text" class="form-control" id="filterKeyword" placeholder="Ketik nama atau NI PPPK..." onkeyup="filterDataCetak()">
+              </div>
+              <div class="col-md-4 d-flex align-items-end gap-2">
+                <button type="button" class="btn btn-secondary w-50 fw-bold" onclick="window.print()">🖨️ Cetak</button>
+                <button type="button" class="btn btn-success w-50 fw-bold" onclick="exportTableToExcel()">📊 Export Excel</button>
+              </div>
+            </div>
+            <div id="printableArea">
+              <div class="text-center mb-4"><h5 class="fw-bold text-uppercase" id="judulCetak">Daftar Nominatif Pegawai PPPK Paruh Waktu</h5><hr></div>
+              <div class="table-responsive">
+                <table class="table table-bordered table-striped align-middle" style="font-size: 11px;" id="tabelNominatif">
+                  <thead class="table-dark text-center">
+                    <tr><th>NO.</th><th>NI PPPK</th><th>NAMA</th><th>JK</th><th>TTL</th><th>GOL</th><th>JABATAN</th><th>SATKER</th><th>MULAI</th><th>AKHIR</th><th>SURAT</th><th>KONTRAK</th></tr>
+                  </thead>
+                  <tbody id="tabelHasilCetak"><tr><td colspan="12" class="text-center">Silakan pilih filter atau ketik pencarian.</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 5: UPLOAD MASSAL PERJANJIAN KERJA -->
+          <div class="tab-pane fade" id="batchUpload" role="tabpanel">
+            <h5 class="mb-3 text-primary fw-bold">Penautan Dokumen Massal Perjanjian Kerja</h5>
+            <div class="alert alert-warning p-3 mb-3" style="font-size: 13px;">
+              📌 Buat Folder Drive, beri nama file <code>NIP_Nama.pdf</code>, atur izin ke <i>Anyone with the link</i>, lalu tempel tautan foldernya.
+            </div>
+            <form id="pdfBatchForm" onsubmit="handleTautanMassalSubmit(event)">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Filter Satuan Kerja</label>
+                <input class="form-control" list="satkerOptionsBatch" id="selectSatkerBatch" placeholder="Pilih Satker..." required>
+                <datalist id="satkerOptionsBatch"></datalist>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Tempel Tautan Folder Google Drive</label>
+                <input type="url" class="form-control" id="linkMassalInput" placeholder="https://drive.google.com/drive/folders/..." required>
+              </div>
+              <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" id="pdfBatchSubmitBtn">🚀 Proses & Tautkan Otomatis</button>
+            </form>
+            <div id="pdfBatchAlertBox" class="mt-3"></div>
+          </div>
+
+          <!-- TAB 6: HELPDESK & BANTUAN (TAMPILAN MODERN MINIMALIS YANG ANDA INGINKAN) -->
+          <div class="tab-pane fade helpdesk-scope" id="helpdeskArea" role="tabpanel">
+            
+            <!-- Header Helpdesk -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 pb-4 border-b border-slate-200">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900 flex items-center">
+                        <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mr-3 text-sm">
+                            <i class="fa-solid fa-headset"></i>
+                        </span>
+                        Pusat Bantuan & Layanan Helpdesk
+                    </h2>
+                    <p class="text-sm text-slate-500 mt-1">Temukan panduan cepat, mulai live chat, atau kirimkan tiket kendala Anda di sini.</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <button onclick="toggleAdminPanel()" class="inline-flex items-center px-4 py-2 text-xs font-semibold rounded-lg text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition shadow-sm">
+                        <i class="fa-solid fa-shield-halved mr-2 text-amber-500"></i> Panel Admin Response
+                    </button>
+                </div>
+            </div>
+
+            <!-- Panel Admin Response (Hidden by default) -->
+            <div id="adminPanel" class="hidden mb-6 bg-white rounded-2xl shadow-sm border border-red-200 overflow-hidden">
+              <div class="bg-red-600 text-white px-5 py-3 flex justify-between items-center text-xs font-bold">
+                <span>🛠️️ Panel Admin: Kelola & Respon Semua Tiket</span>
+                <button class="px-2.5 py-1 bg-white text-red-600 rounded text-[11px]" onclick="loadAdminTickets()">🔄 Muat Ulang</button>
+              </div>
+              <div class="p-4 overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr class="bg-slate-100 border-b text-slate-700">
+                      <th class="p-2.5">Waktu</th><th class="p-2.5">Pelapor / Kategori</th><th class="p-2.5">Pesan Kendala</th><th class="p-2.5">Status</th><th class="p-2.5">Balasan Admin</th><th class="p-2.5">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminTicketTable" class="divide-y divide-slate-100">
+                    <tr><td colspan="6" class="text-center p-3 text-slate-500">Memuat tiket...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Sub-Tab Interaktif Helpdesk -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="flex border-b border-slate-200 bg-slate-50/50 px-4 pt-3 space-x-2">
+                    <button onclick="switchHelpTab('faq')" id="tab-btn-faq" class="help-tab-btn px-5 py-3 text-sm font-semibold rounded-t-xl border-b-2 border-blue-600 text-blue-600 bg-white transition flex items-center">
+                        <i class="fa-solid fa-circle-question mr-2"></i> Panduan FAQ
+                    </button>
+                    <button onclick="switchHelpTab('chat')" id="tab-btn-chat" class="help-tab-btn px-5 py-3 text-sm font-semibold rounded-t-xl border-b-2 border-transparent text-slate-600 hover:text-blue-600 transition flex items-center">
+                        <i class="fa-solid fa-comments mr-2"></i> Live Chat Asisten
+                        <span class="ml-2 px-2 py-0.5 text-[10px] bg-emerald-100 text-emerald-700 rounded-full font-bold">Online</span>
+                    </button>
+                    <button onclick="switchHelpTab('ticket')" id="tab-btn-ticket" class="help-tab-btn px-5 py-3 text-sm font-semibold rounded-t-xl border-b-2 border-transparent text-slate-600 hover:text-blue-600 transition flex items-center">
+                        <i class="fa-solid fa-ticket mr-2"></i> Buat & Riwayat Tiket
+                    </button>
+                </div>
+
+                <div class="p-6">
+                    <!-- HELP TAB 1: FAQ -->
+                    <div id="help-tab-faq" class="help-tab-content active space-y-4">
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900">Pertanyaan yang Sering Diajukan</h3>
+                                <p class="text-xs text-slate-500">Cari solusi kilat untuk pertanyaan seputar penggunaan aplikasi.</p>
+                            </div>
+                            <div class="relative w-full sm:w-72">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-xs text-slate-400"></i>
+                                <input type="text" id="faqSearch" onkeyup="filterFaq()" placeholder="Cari topik atau kata kunci..." class="w-full pl-10 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition">
+                            </div>
+                        </div>
+
+                        <div class="space-y-3" id="faqContainer">
+                            <div class="faq-item border border-slate-200 rounded-xl overflow-hidden transition hover:border-blue-300">
+                                <button onclick="toggleAccordion(1)" class="w-full px-5 py-4 text-left font-medium text-sm text-slate-800 flex justify-between items-center bg-white hover:bg-slate-50 transition">
+                                    <span class="flex items-center"><i class="fa-solid fa-circle-question text-blue-600 mr-3 text-xs"></i>1. Bagaimana cara melakukan input data pegawai baru?</span>
+                                    <i id="icon-1" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
+                                </button>
+                                <div id="content-1" class="hidden px-5 py-4 bg-slate-50/50 border-t border-slate-100 text-xs text-slate-600 space-y-2">
+                                    <p>Buka menu <b>Input Manual Per-nama</b>, lalu ketik NIP atau Nama pegawai. Sistem akan otomatis menarik data dasar dari sheet <i>config</i>. Jika NIP sudah terdaftar, form otomatis masuk ke <i>Mode Edit</i>.</p>
+                                </div>
+                            </div>
+                            <div class="faq-item border border-slate-200 rounded-xl overflow-hidden transition hover:border-blue-300">
+                                <button onclick="toggleAccordion(2)" class="w-full px-5 py-4 text-left font-medium text-sm text-slate-800 flex justify-between items-center bg-white hover:bg-slate-50 transition">
+                                    <span class="flex items-center"><i class="fa-solid fa-circle-question text-blue-600 mr-3 text-xs"></i>2. Bagaimana aturan penautan dokumen massal Perjanjian Kerja?</span>
+                                    <i id="icon-2" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
+                                </button>
+                                <div id="content-2" class="hidden px-5 py-4 bg-slate-50/50 border-t border-slate-100 text-xs text-slate-600 space-y-2">
+                                    <p>Buat folder Google Drive untuk Satker, pastikan nama file berformat <code>NIP_Nama.pdf</code>, atur izin folder ke <i>Anyone with the link</i>, lalu tempel tautan foldernya.</p>
+                                </div>
+                            </div>
+                            <div class="faq-item border border-slate-200 rounded-xl overflow-hidden transition hover:border-blue-300">
+                                <button onclick="toggleAccordion(3)" class="w-full px-5 py-4 text-left font-medium text-sm text-slate-800 flex justify-between items-center bg-white hover:bg-slate-50 transition">
+                                    <span class="flex items-center"><i class="fa-solid fa-circle-question text-blue-600 mr-3 text-xs"></i>3. Kapan batas akhir pengisian dan pengusulan data?</span>
+                                    <i id="icon-3" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
+                                </button>
+                                <div id="content-3" class="hidden px-5 py-4 bg-slate-50/50 border-t border-slate-100 text-xs text-slate-600 space-y-2">
+                                    <p>Batas akhir pengusulan dan pengisian seluruh data adalah tanggal <b>6 Oktober 2026 pukul 23:59 WIB</b>.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HELP TAB 2: LIVE CHAT -->
+                    <div id="help-tab-chat" class="help-tab-content space-y-4">
+                        <div class="max-w-2xl mx-auto border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 shadow-inner flex flex-col h-[400px]">
+                            <div class="bg-white px-5 py-3 border-b border-slate-200 flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="relative">
+                                        <div class="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs">AI</div>
+                                        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-slate-900">Asisten Virtual & Pencarian Pegawai</h4>
+                                        <p class="text-[10px] text-emerald-600 font-medium">Aktif • Ketik NIP atau Nama untuk cek data instan</p>
+                                    </div>
+                                </div>
+                                <span class="text-[10px] bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">Online</span>
+                            </div>
+
+                            <div id="chatContainer" class="p-4 flex-grow overflow-y-auto space-y-3">
+                                <div class="flex items-start space-x-2">
+                                    <div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">AI</div>
+                                    <div class="bg-white p-3 rounded-2xl rounded-tl-sm shadow-sm border border-slate-200 text-xs text-slate-700 max-w-[80%]">
+                                        Halo! Ketik pertanyaan atau NIP/Nama pegawai untuk mencari data instan.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-white border-t border-slate-200 flex items-center space-x-2">
+                                <input type="text" id="chatInput" onkeypress="handleChatKey(event)" placeholder="Ketik pertanyaan atau NIP/Nama pegawai..." class="flex-grow px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition">
+                                <button onclick="sendChatAI()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition shadow-sm flex items-center">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HELP TAB 3: TIKET -->
+                    <div id="help-tab-ticket" class="help-tab-content space-y-6">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Formulir Pelaporan Kendala</h3>
+                            <p class="text-xs text-slate-500">Isi form di bawah ini jika kendala Anda tidak terselesaikan di FAQ atau Live Chat.</p>
+                        </div>
+
+                        <form id="ticketForm" onsubmit="handleTicketSubmit(event)" class="grid grid-cols-1 md:grid-cols-2 gap-5 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nama Pelapor / Asal Satker <span class="text-red-500">*</span></label>
+                                <input type="text" id="ticketNama" required placeholder="Nama & Asal Satker..." oninput="simpanNamaPelapor(this.value)" class="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Kategori Kendala <span class="text-red-500">*</span></label>
+                                <select id="ticketKategori" class="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition">
+                                    <option value="Akses Tautan Gagal">Akses Tautan / Folder Gagal</option>
+                                    <option value="Data Pegawai Tidak Sesuai">Data Pegawai Tidak Sesuai</option>
+                                    <option value="Error Saat Input Massal (Import Excel)">Error Saat Input Massal (Import Excel)</option>
+                                    <option value="Lainnya">Lainnya</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Detail Keterangan <span class="text-red-500">*</span></label>
+                                <textarea id="ticketPesan" rows="3" required placeholder="Jelaskan kendala secara detail..." class="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition"></textarea>
+                            </div>
+                            <div class="md:col-span-2 flex justify-between items-center">
+                                <div id="ticketAlertBox" class="text-xs"></div>
+                                <button type="submit" id="ticketBtn" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition shadow-sm flex items-center">
+                                    <i class="fa-solid fa-paper-plane mr-2"></i> Kirim Tiket Laporan
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="mt-8">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="text-sm font-bold text-slate-900">Riwayat Laporan Anda</h4>
+                                <div class="space-x-2">
+                                    <button class="px-3 py-1 text-xs bg-blue-50 text-blue-600 font-semibold rounded-lg border border-blue-200 hover:bg-blue-100" onclick="bukaCekHistoryModal()">🔍 Cek Histori</button>
+                                    <button class="px-3 py-1 text-xs bg-slate-100 text-slate-600 font-semibold rounded-lg hover:bg-slate-200" onclick="clearTicketForm()">🔄 Reset</button>
+                                </div>
+                            </div>
+                            <div class="border border-slate-200 rounded-xl overflow-hidden bg-white p-4">
+                                <div id="ticketHistoryList" class="text-xs space-y-3">
+                                    <p class="text-slate-500 text-center py-2">Masukkan nama pelapor untuk melihat histori.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+          </div>
+
+        </div>
       </div>
-      <div>
-        <select class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl" id="selectHistoryUser"><option value="">-- Pilih Nama dari Perangkat Ini --</option></select>
-      </div>
-      <button type="button" class="w-full py-2.5 bg-blue-600 text-white font-bold text-xs rounded-xl hover:bg-blue-700" onclick="pilihUserDariDropdown()">Tampilkan Histori</button>
     </div>
   </div>
 
-  <!-- JavaScript Logika Aplikasi Lengkap -->
+  <!-- Modal Cek Histori -->
+  <div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content">
+        <div class="modal-header py-2 bg-light">
+          <h6 class="modal-title fw-bold" style="font-size: 13px;">Pilih Nama Pelapor Tersimpan</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-3">
+          <div class="mb-2">
+            <select class="form-select form-select-sm" id="selectHistoryUser"><option value="">-- Pilih Nama dari Perangkat Ini --</option></select>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm w-100 fw-bold" onclick="pilihUserDariDropdown()">Tampilkan Histori</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Logika Backend Utuh -->
   <script>
     var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydHdW6a_YPwH41E0V8-xq1SYDtZq9Y4C4ggntVXrTAC90BhYLAhIY8wQdnamok6YRa/exec";  
     var databasePegawaiCache = [];
 
     function callServer(action, payload, cb, errCb) {
       fetch(SCRIPT_URL, { 
-        method: "POST", 
-        mode: "cors",
+        method: "POST", mode: "cors",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: action, payload: payload }) 
       })
       .then(res => res.json())
       .then(res => { 
-        if (res.status === "success") { cb(res.data); } 
+        if (res.status === "success") cb(res.data); 
         else { if (errCb) errCb(new Error(res.message)); else alert("Error Server: " + res.message); } 
       })
       .catch(err => { if (errCb) errCb(err); else alert("Koneksi Gagal: " + err.message); });
@@ -547,28 +517,15 @@
       muatNamaPelaporTersimpan();
     }
 
-    // Navigasi Antar Tab Utama
-    function switchMainTab(tabId) {
-      document.querySelectorAll('.custom-tab-pane').forEach(el => el.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      document.getElementById('actionDropdown').classList.add('hidden');
-      if(tabId === 'printArea') filterDataCetak();
-      if(tabId === 'dashboardArea') loadDashboardData();
-    }
-
-    function toggleDropdown() {
-      document.getElementById('actionDropdown').classList.toggle('hidden');
-    }
-
     // Navigasi Sub-Tab Helpdesk
     function switchHelpTab(tabName) {
-      document.querySelectorAll('.help-tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.help-tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.help-tab-btn').forEach(btn => {
         btn.classList.remove('border-blue-600', 'text-blue-600', 'bg-white');
         btn.classList.add('border-transparent', 'text-slate-600');
       });
 
-      document.getElementById('help-tab-' + tabName).classList.remove('hidden');
+      document.getElementById('help-tab-' + tabName).classList.add('active');
       const activeBtn = document.getElementById('tab-btn-' + tabName);
       activeBtn.classList.remove('border-transparent', 'text-slate-600');
       activeBtn.classList.add('border-blue-600', 'text-blue-600', 'bg-white');
@@ -588,7 +545,6 @@
       });
     }
 
-    // Database & Form Functions
     function loadDatabasePegawaiForInput() {
       google.script.run.withSuccessHandler(function(dataList) {
         databasePegawaiCache = dataList;
@@ -601,7 +557,7 @@
           if (item.nama) { var o2 = document.createElement('option'); o2.value = item.nama; namaOptions.appendChild(o2); }
         });
         var statusBox = document.getElementById('loadingStatus');
-        if (statusBox) { statusBox.className = "bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-xl text-xs mb-4"; statusBox.innerHTML = "✅ Database sheet config berhasil dimuat."; }
+        if (statusBox) { statusBox.className = "alert alert-success py-2 mb-3"; statusBox.innerHTML = "✅ Database sheet config berhasil dimuat."; }
       }).getAllDataPegawai();
     }
 
@@ -612,8 +568,8 @@
       var submitBtn = document.getElementById('submitBtn');
       if (found) {
         isiFormPegawai(found);
-        if (found.isInputed) { alertBox.classList.remove('hidden'); submitBtn.innerText = "Simpan Perubahan (Mode Edit)"; }
-        else { alertBox.classList.add('hidden'); submitBtn.innerText = "Simpan Data"; }
+        if (found.isInputed) { alertBox.classList.remove('d-none'); submitBtn.innerText = "Simpan Perubahan (Mode Edit)"; }
+        else { alertBox.classList.add('d-none'); submitBtn.innerText = "Simpan Data"; }
       }
     }
 
@@ -635,7 +591,7 @@
 
     function resetFormManual() {
       document.getElementById('pegawaiForm').reset();
-      document.getElementById('modeEditAlert').classList.add('hidden');
+      document.getElementById('modeEditAlert').classList.add('d-none');
       document.getElementById('submitBtn').innerText = "Simpan Data";
     }
 
@@ -649,7 +605,7 @@
         tbody.innerHTML = "";
         for (var satker in summary.satkerDetail) {
           var d = summary.satkerDetail[satker];
-          tbody.innerHTML += `<tr class="hover:bg-slate-50"><td class="p-2.5 font-bold">${satker}</td><td class="p-2.5 text-center">${d.target}</td><td class="p-2.5 text-center">${d.input}</td><td class="p-2.5 text-center">${d.surat} / ${d.target}</td><td class="p-2.5 text-center">${d.kontrak} / ${d.target}</td></tr>`;
+          tbody.innerHTML += `<tr><td><b>${satker}</b></td><td class="text-center">${d.target}</td><td class="text-center">${d.input}</td><td class="text-center">${d.surat} / ${d.target}</td><td class="text-center">${d.kontrak} / ${d.target}</td></tr>`;
         }
       }).getDashboardSummary();
     }
@@ -669,9 +625,9 @@
       google.script.run.withSuccessHandler(function(data) {
         var tbody = document.getElementById('tabelHasilCetak');
         tbody.innerHTML = "";
-        if (!data.length) { tbody.innerHTML = '<tr><td colspan="12" class="text-center p-4 text-slate-500">Tidak ada data.</td></tr>'; return; }
+        if (!data.length) { tbody.innerHTML = '<tr><td colspan="12" class="text-center">Tidak ada data.</td></tr>'; return; }
         data.forEach((item, idx) => {
-          tbody.innerHTML += `<tr class="hover:bg-slate-50 text-[11px]"><td class="p-2 text-center">${idx + 1}</td><td class="p-2 font-bold">${item.ni}</td><td class="p-2">${item.nama}</td><td class="p-2 text-center">${item.jk}</td><td class="p-2">${item.ttl}</td><td class="p-2 text-center">${item.gol}</td><td class="p-2">${item.jabatan}</td><td class="p-2">${item.satker}</td><td class="p-2">${item.tglMulai}</td><td class="p-2">${item.tglAkhir}</td><td class="p-2 text-center">${item.linkPersetujuan ? '<a href="'+item.linkPersetujuan+'" target="_blank" class="text-blue-600 underline">Lihat</a>' : '-'}</td><td class="p-2 text-center">${item.linkPerjanjian ? '<a href="'+item.linkPerjanjian+'" target="_blank" class="text-blue-600 underline">Lihat</a>' : '-'}</td></tr>`;
+          tbody.innerHTML += `<tr><td class="text-center">${idx + 1}</td><td><b>${item.ni}</b></td><td>${item.nama}</td><td class="text-center">${item.jk}</td><td>${item.ttl}</td><td class="text-center">${item.gol}</td><td>${item.jabatan}</td><td>${item.satker}</td><td>${item.tglMulai}</td><td>${item.tglAkhir}</td><td class="text-center">${item.linkPersetujuan ? '<a href="'+item.linkPersetujuan+'" target="_blank">Lihat</a>' : '-'}</td><td class="text-center">${item.linkPerjanjian ? '<a href="'+item.linkPerjanjian+'" target="_blank">Lihat</a>' : '-'}</td></tr>`;
         });
       }).cariDataPegawai(satker, keyword);
     }
@@ -697,7 +653,7 @@
         namaSatker: document.getElementById('namaSatker').value, tglMulai: document.getElementById('tglMulai').value, tglAkhir: document.getElementById('tglAkhir').value
       };
       google.script.run.withSuccessHandler(res => {
-        document.getElementById('alertBox').innerHTML = '<div class="bg-emerald-50 text-emerald-800 p-3 rounded-xl">' + res + '</div>';
+        document.getElementById('alertBox').innerHTML = '<div class="alert alert-success">' + res + '</div>';
         resetFormManual(); btn.disabled = false; btn.innerText = "Simpan Data"; initApp();
       }).simpanData(fd);
     }
@@ -705,14 +661,14 @@
     function handleImportExcel() {
       var f = document.getElementById('excelFile'); if(!f.files.length) return alert("Pilih file!");
       var r = new FileReader(); r.onload = function(e) {
-        google.script.run.withSuccessHandler(res => { document.getElementById('importAlertBox').innerHTML = '<div class="bg-emerald-50 text-emerald-800 p-3 rounded-xl mt-3">' + res + '</div>'; initApp(); }).importDataExcel({ data: e.target.result.split(',')[1], fileName: f.files[0].name });
+        google.script.run.withSuccessHandler(res => { document.getElementById('importAlertBox').innerHTML = '<div class="alert alert-success mt-3">' + res + '</div>'; initApp(); }).importDataExcel({ data: e.target.result.split(',')[1], fileName: f.files[0].name });
       }; r.readAsDataURL(f.files[0]);
     }
 
     function handleTautanSuratSubmit(event) {
       event.preventDefault();
       google.script.run.withSuccessHandler(res => {
-        document.getElementById('pdfAlertBox').innerHTML = '<div class="bg-emerald-50 text-emerald-800 p-3 rounded-xl mt-3">' + res + '</div>';
+        document.getElementById('pdfAlertBox').innerHTML = '<div class="alert alert-success mt-3">' + res + '</div>';
         document.getElementById('pdfForm').reset(); initApp();
       }).simpanTautanSuratPersetujuan({ satker: document.getElementById('selectSatkerPdf').value, linkUrl: document.getElementById('linkSuratPersetujuan').value });
     }
@@ -720,12 +676,11 @@
     function handleTautanMassalSubmit(event) {
       event.preventDefault();
       google.script.run.withSuccessHandler(res => {
-        document.getElementById('pdfBatchAlertBox').innerHTML = '<div class="bg-emerald-50 text-emerald-800 p-3 rounded-xl mt-3">' + res + '</div>';
+        document.getElementById('pdfBatchAlertBox').innerHTML = '<div class="alert alert-success mt-3">' + res + '</div>';
         document.getElementById('pdfBatchForm').reset(); initApp();
       }).simpanTautanDokumenMassal({ satker: document.getElementById('selectSatkerBatch').value, linkInput: document.getElementById('linkMassalInput').value });
     }
 
-    // Chat AI Interaktif
     function sendChatAI() {
       var input = document.getElementById('chatInput'); var c = document.getElementById('chatContainer'); var text = input.value.trim(); if (!text) return;
       c.innerHTML += `<div class="flex items-start justify-end"><div class="bg-blue-600 text-white p-3 rounded-2xl rounded-tr-sm text-xs max-w-[80%]">${text}</div></div>`;
@@ -742,7 +697,6 @@
     }
     function handleChatKey(e) { if(e.key === 'Enter') sendChatAI(); }
 
-    // Tiket & Histori
     function simpanNamaPelapor(nama) {
       if (!nama || !nama.trim()) return;
       localStorage.setItem('pppk_pelapor_nama', nama.trim());
@@ -765,16 +719,15 @@
       var select = document.getElementById('selectHistoryUser');
       select.innerHTML = '<option value="">-- Pilih Nama dari Perangkat Ini --</option>';
       JSON.parse(localStorage.getItem('pppk_riwayat_nama_list') || "[]").forEach(n => { select.innerHTML += `<option value="${n}">${n}</option>`; });
-      document.getElementById('historyModal').classList.remove('hidden');
+      new bootstrap.Modal(document.getElementById('historyModal')).show();
     }
-    function tutupCekHistoryModal() { document.getElementById('historyModal').classList.add('hidden'); }
 
     function pilihUserDariDropdown() {
       var chosen = document.getElementById('selectHistoryUser').value;
       if (!chosen) return alert("Pilih nama terlebih dahulu!");
       document.getElementById('ticketNama').value = chosen;
       localStorage.setItem('pppk_pelapor_nama', chosen);
-      loadTicketHistory(); tutupCekHistoryModal();
+      loadTicketHistory(); bootstrap.Modal.getInstance(document.getElementById('historyModal')).hide();
     }
 
     function handleTicketSubmit(event) {
@@ -847,5 +800,7 @@
       if (typeof initApp === 'function') initApp();
     }
   </script>
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
