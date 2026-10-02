@@ -5,12 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Aplikasi Manajemen Data Pegawai & Kontrak</title>
-  <!-- Bootstrap 5 CSS untuk Tampilan Utama -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Tailwind CSS khusus untuk Tampilan Helpdesk Modern -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome untuk Ikon Modern -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Pustaka SheetJS untuk Ekspor Excel (.xlsx) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
@@ -28,16 +23,39 @@
     .running-text { display: inline-block; animation: marquee 25s linear infinite; }
     @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     .countdown-badge { background-color: #dc3545; color: white; padding: 2px 8px; border-radius: 4px; font-family: monospace; }
-    
-    /* Style khusus agar scope Tailwind di helpdesk tidak merusak Bootstrap di luar */
-    .helpdesk-scope { font-family: 'Inter', sans-serif; }
-    .help-tab-content { display: none; }
-    .help-tab-content.active { display: block; }
-
+    .chat-box { height: 160px; overflow-y: auto; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 8px; }
+    .chat-bubble { margin-bottom: 6px; padding: 5px 8px; border-radius: 8px; max-width: 85%; font-size: 11px; }
+    .chat-user { background: #0d6efd; color: white; margin-left: auto; text-align: right; }
+    .chat-admin { background: #e9ecef; color: #212529; }
+    .help-action-btn { transition: all 0.2s; }
+    .help-action-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .stat-card { border-left: 5px solid #0d6efd; border-radius: 8px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+ /* --- CSS KHUSUS CETAK BERSIH DI PALING BAWAH --- */
     @media print {
-      body * { visibility: hidden; }
-      #printableArea, #printableArea * { visibility: visible; }
-      #printableArea { position: absolute; left: 0; top: 0; width: 100%; }
+      @page {
+        size: landscape;
+        margin: 10mm;
+      }
+      body * {
+        visibility: hidden;
+      }
+      #printableArea, #printableArea * {
+        visibility: visible;
+      }
+      #printableArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+      .card {
+        border: none !important;
+        box-shadow: none !important;
+      }
+      /* Mengecilkan sedikit ukuran font tabel saat dicetak agar semua kolom muat sempurna */
+      #tabelNominatif {
+        font-size: 9px !important;
+      }
     }
   </style>
 </head>
@@ -45,29 +63,23 @@
   <div class="container-fluid my-4 px-4">
     <div class="card shadow-sm mb-4">
       <div class="card-header bg-white border-bottom p-3">
-        
-        <!-- Baris Pengumuman / Running Text -->
         <div class="announcement-bar">
           <div class="running-text">
             ⚠️ <b>Penting!</b> Batas Akhir Pengusulan dan Pengisian pada tanggal 6 Oktober 2026 
             <span id="countdownDisplay" class="countdown-badge">Memuat Waktu...</span> ⏰
           </div>
         </div>
-
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h4 class="text-dark fw-bold mb-0">Manajemen Data Pegawai & Kontrak</h4>
-          <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" onclick="resetAplikasiTotal()">🔄 Refresh Tampilan</button>
-        </div>
-
-        <!-- TAB NAVIGASI UTAMA (GAYA ASLI ANDA) -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-3 text-dark fw-bold mb-0">Manajemen Data Pegawai & Kontrak</h4>
+  <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" onclick="document.querySelectorAll('input, textarea').forEach(el => el.value = ''); if(typeof initApp === 'function') initApp();">🔄 Refresh Tampilan</button>
+</div>
         <ul class="nav nav-pills custom-tabs" id="myTab" role="tablist">
           <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dashboardArea" onclick="loadDashboardData()">📊 Dashboard Monitoring</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#single" onclick="loadSatkerDatalists()">Input Manual Per-nama</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#import">Input Massal (Import Excel)</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pdfUpload" onclick="loadSatkerDatalists()">Upload Surat Usulan</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pdfUpload" onclick="loadSatkerDatalists()"> Upload Surat Usulan (Salin Tautan dari Drive)</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#printArea" onclick="loadSatkerDatalists(); filterDataCetak();">Cetak & Filter</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#batchUpload" onclick="loadSatkerDatalists()">Upload Perjanjian Kerja</button></li>
-          <!-- TOMBOL MENU HELPDESK -->
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#batchUpload" onclick="loadSatkerDatalists()">Upload Perjanjian Kerja (Salin Tautan dari Folder Drive)</button></li>
           <li class="nav-item"><button class="nav-link bg-info text-white fw-bold" data-bs-toggle="tab" data-bs-target="#helpdeskArea" onclick="loadTicketHistory()">🛟 Helpdesk & Bantuan</button></li>
         </ul>
       </div>
@@ -80,25 +92,25 @@
             <h5 class="fw-bold mb-3 text-primary">📊 Dashboard Monitoring & Statistik</h5>
             <div class="row g-3 mb-4">
               <div class="col-md-3">
-                <div class="p-3 border rounded bg-white shadow-sm border-primary border-start-0 border-top-0 border-bottom-0 border-4">
+                <div class="p-3 stat-card border-primary">
                   <span class="text-muted small fw-bold">TOTAL PEGAWAI PPPK PW</span>
                   <h3 class="fw-bold mt-1" id="statTarget">0</h3>
                 </div>
               </div>
               <div class="col-md-3">
-                <div class="p-3 border rounded bg-white shadow-sm border-success border-start-0 border-top-0 border-bottom-0 border-4">
+                <div class="p-3 stat-card border-success">
                   <span class="text-muted small fw-bold">SUDAH INPUT NIP</span>
                   <h3 class="fw-bold mt-1 text-success" id="statInput">0</h3>
                 </div>
               </div>
               <div class="col-md-3">
-                <div class="p-3 border rounded bg-white shadow-sm border-warning border-start-0 border-top-0 border-bottom-0 border-4">
+                <div class="p-3 stat-card border-warning">
                   <span class="text-muted small fw-bold">SURAT PERSETUJUAN UPLOAD</span>
                   <h3 class="fw-bold mt-1 text-warning" id="statSurat">0</h3>
                 </div>
               </div>
               <div class="col-md-3">
-                <div class="p-3 border rounded bg-white shadow-sm border-danger border-start-0 border-top-0 border-bottom-0 border-4">
+                <div class="p-3 stat-card border-danger">
                   <span class="text-muted small fw-bold">PERJANJIAN KERJA UPLOAD</span>
                   <h3 class="fw-bold mt-1 text-danger" id="statKontrak">0</h3>
                 </div>
@@ -127,44 +139,58 @@
               <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" onclick="resetFormManual()">🔄 Refresh / Bersihkan Form</button>
             </div>
             <div id="loadingStatus" class="alert alert-warning py-2 mb-3" style="font-size: 13px;">⏳ Memuat database pegawai dari sheet config...</div>
-            <div id="modeEditAlert" class="alert alert-warning py-2 mb-3 d-none fw-bold" style="font-size: 13px;">⚠️ NIP ini sudah pernah diinput. Anda berada dalam <b>Mode Edit</b>.</div>
+            <div id="modeEditAlert" class="alert alert-warning py-2 mb-3 d-none fw-bold" style="font-size: 13px;">⚠️ NIP ini sudah pernah diinput. Anda berada dalam <b>Mode Edit (Perubahan Otomatis)</b>. Silakan ubah data yang diinginkan lalu simpan.</div>
             
             <form id="pegawaiForm" onsubmit="handleFormSubmit(event)">
               <div class="mb-3">
-                <label class="form-label fw-bold">NI PPPK / NIP / Nomor Identitas</label>
-                <input type="text" class="form-control" id="niPppk" list="niOptions" placeholder="Ketik NIP atau pilih..." oninput="isiOtomatisOlehNi(this.value)" required>
+                <label class="form-label fw-bold">NI PPPK / NIP / Nomor Identitas (Bisa Ketik Manual / Pilih)</label>
+                <input type="text" class="form-control" id="niPppk" list="niOptions" placeholder="Ketik NIP atau pilih dari database..." oninput="isiOtomatisOlehNi(this.value)" onchange="isiOtomatisOlehNi(this.value)" required>
                 <datalist id="niOptions"></datalist>
               </div>
+
               <div class="mb-3">
-                <label class="form-label fw-bold">Nama Pegawai</label>
-                <input type="text" class="form-control" id="namaPegawai" list="namaOptions" placeholder="Ketik nama atau pilih..." oninput="isiOtomatisOlehNama(this.value)" required>
+                <label class="form-label fw-bold">Nama Pegawai (Bisa Ketik Manual / Pilih sampai akhir)</label>
+                <input type="text" class="form-control" id="namaPegawai" list="namaOptions" placeholder="Ketik nama atau pilih dari database..." oninput="isiOtomatisOlehNama(this.value)" onchange="isiOtomatisOlehNama(this.value)" required>
                 <datalist id="namaOptions"></datalist>
               </div>
+
               <div class="mb-3">
                 <label class="form-label fw-bold">Jenis Kelamin</label>
-                <input type="text" class="form-control" id="jenisKelamin" placeholder="Laki-Laki / Perempuan" required>
+                <input type="text" class="form-control" id="jenisKelamin" placeholder="Contoh: Laki-Laki / Perempuan" required>
               </div>
+
               <div class="mb-3">
                 <label class="form-label fw-bold">Tempat, Tanggal Lahir</label>
                 <input type="text" class="form-control" id="ttl" placeholder="Contoh: Jakarta, 22 September 1996" required>
               </div>
+
               <div class="mb-3">
                 <label class="form-label fw-bold">Golongan</label>
-                <input type="text" class="form-control" id="golongan" placeholder="Contoh: III/a" required>
+                <input type="text" class="form-control" id="golongan" placeholder="Contoh: III/a atau 0" required>
               </div>
+
               <div class="mb-3">
                 <label class="form-label fw-bold">Nama Jabatan</label>
                 <input type="text" class="form-control" id="namaJabatan" required>
               </div>
+
               <div class="mb-3">
-                <label class="form-label fw-bold">Nama Satuan Kerja (Satker)</label>
-                <input class="form-control" list="satkerOptionsInput" id="namaSatker" placeholder="Pilih Satker..." required>
+                <label class="form-label fw-bold">Nama Satuan Kerja (Satker) - Ketik atau Pilih</label>
+                <input class="form-control" list="satkerOptionsInput" id="namaSatker" placeholder="Ketik atau pilih Satuan Kerja..." required>
                 <datalist id="satkerOptionsInput"></datalist>
               </div>
+
               <div class="row">
-                <div class="col-md-6 mb-3"><label class="form-label fw-bold">Tanggal Mulai</label><input type="date" class="form-control" id="tglMulai" value="2026-11-01" required></div>
-                <div class="col-md-6 mb-3"><label class="form-label fw-bold">Tanggal Berakhir</label><input type="date" class="form-control" id="tglAkhir" value="2027-10-31" required></div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label fw-bold">Tanggal Mulai Kontrak</label>
+                  <input type="date" class="form-control" id="tglMulai" value="2026-11-01" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label fw-bold">Tanggal Berakhir Kontrak</label>
+                  <input type="date" class="form-control" id="tglAkhir" value="2027-10-31" required>
+                </div>
               </div>
+
               <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" id="submitBtn">Simpan Data</button>
             </form>
             <div id="alertBox" class="mt-3"></div>
@@ -173,33 +199,46 @@
           <!-- TAB 2: Input Massal (Import Excel) -->
           <div class="tab-pane fade" id="import" role="tabpanel">
             <h5 class="mb-3 text-success fw-bold">Import Data Massal Excel (.xlsx)</h5>
+            <p class="text-muted">Unggah file berformat <b>Excel (.xlsx)</b> asli untuk memasukkan banyak data sekaligus.</p>
+            
             <div class="alert alert-info p-3 mb-3">
               <span class="fw-bold">Belum punya templat Excel?</span><br>
+              Unduh file contoh format Excel di bawah ini, lalu isi datanya.<br>
               <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="downloadExcelTemplate()">📥 Unduh Templat Excel (.xlsx)</button>
             </div>
+
             <div class="mb-3">
               <label class="form-label fw-bold">Pilih File Excel / CSV</label>
               <input type="file" class="form-control" id="excelFile" accept=".xlsx, .xls, .csv">
             </div>
+
             <button type="button" class="btn btn-success w-100 py-2 fw-bold" id="importBtn" onclick="handleImportExcel()">Proses Import Data</button>
             <div id="importAlertBox" class="mt-3"></div>
           </div>
 
-          <!-- TAB 3: UPLOAD SURAT PERSETUJUAN -->
+          <!-- TAB 3: UPLOAD SURAT PERSETUJUAN (VIA TAUTAN) -->
           <div class="tab-pane fade" id="pdfUpload" role="tabpanel">
             <div class="alert alert-warning mb-3" style="font-size: 13px;">
-              <strong>💡 Panduan:</strong> Atur akses berbagi file Drive menjadi <b>"Anyone with the link"</b>, lalu salin tautannya ke sini.
+              <strong>💡 Panduan Upload Surat Usulan:</strong><br>
+              - Gabung Dokumen Surat Usulan dan Surat Pernyataan menjadi satu file PDF ke Google Drive Anda.<br>
+              - Atur akses berbagi file menjadi <b>"Siapa saja yang memiliki tautan" (Anyone with the link / Viewer)</b>.<br>
+              - Salin tautan tersebut dan tempelkan di bawah ini.
             </div>
+
+            <h5 class="mb-3 text-danger fw-bold">Penautan Dokumen Surat Persetujuan Berdasarkan Satker</h5>
+            
             <form id="pdfForm" onsubmit="handleTautanSuratSubmit(event)">
               <div class="mb-3">
-                <label class="form-label fw-bold">Satuan Kerja (Satker)</label>
-                <input class="form-control" list="satkerOptionsPdf" id="selectSatkerPdf" placeholder="Pilih Satker..." required>
+                <label class="form-label fw-bold">Satuan Kerja (Satker) - Ketik atau Pilih</label>
+                <input class="form-control" list="satkerOptionsPdf" id="selectSatkerPdf" placeholder="Ketik atau pilih Satker..." required>
                 <datalist id="satkerOptionsPdf"></datalist>
               </div>
+
               <div class="mb-3">
-                <label class="form-label fw-bold">Tempel Tautan Google Drive (URL Surat PDF)</label>
+                <label class="form-label fw-bold">Tempel Tautan Google Drive (URL Surat Persetujuan PDF)</label>
                 <input type="url" class="form-control" id="linkSuratPersetujuan" placeholder="https://drive.google.com/file/d/.../view" required>
               </div>
+
               <button type="submit" class="btn btn-danger w-100 py-2 fw-bold" id="pdfSubmitBtn">Simpan & Tautkan ke Satker</button>
             </form>
             <div id="pdfAlertBox" class="mt-3"></div>
@@ -208,10 +247,12 @@
           <!-- TAB 4: CETAK & FILTER -->
           <div class="tab-pane fade" id="printArea" role="tabpanel">
             <h5 class="mb-3 text-dark fw-bold">Pencarian, Filter & Cetak Data Pegawai</h5>
+            <p class="text-muted">Cari, saring berdasarkan Satker, cetak, atau unduh rekapitulasi data ke format Excel.</p>
+            
             <div class="row g-3 mb-4">
               <div class="col-md-4">
-                <label class="form-label fw-bold">Filter Satuan Kerja</label>
-                <input class="form-control" list="satkerOptionsCetak" id="filterSatker" placeholder="Pilih Satker..." oninput="filterDataCetak()">
+                <label class="form-label fw-bold">Filter Satuan Kerja (Satker) - Bisa Ketik</label>
+                <input class="form-control" list="satkerOptionsCetak" id="filterSatker" placeholder="Ketik atau pilih Satker..." oninput="filterDataCetak()" onchange="filterDataCetak()">
                 <datalist id="satkerOptionsCetak"></datalist>
               </div>
               <div class="col-md-4">
@@ -223,12 +264,21 @@
                 <button type="button" class="btn btn-success w-50 fw-bold" onclick="exportTableToExcel()">📊 Export Excel</button>
               </div>
             </div>
+
             <div id="printableArea">
-              <div class="text-center mb-4"><h5 class="fw-bold text-uppercase" id="judulCetak">Daftar Nominatif Pegawai PPPK Paruh Waktu</h5><hr></div>
+              <div class="text-center mb-4">
+                <h5 class="fw-bold text-uppercase" id="judulCetak">Daftar Nominatif Pegawai Pemerintah dengan Perjanjian Kerja Paruh Waktu di Lingkungan Kementerian Sosial</h5>
+                <hr>
+              </div>
               <div class="table-responsive">
                 <table class="table table-bordered table-striped align-middle" style="font-size: 11px;" id="tabelNominatif">
                   <thead class="table-dark text-center">
-                    <tr><th>NO.</th><th>NI PPPK</th><th>NAMA</th><th>JK</th><th>TTL</th><th>GOL</th><th>JABATAN</th><th>SATKER</th><th>MULAI</th><th>AKHIR</th><th>SURAT</th><th>KONTRAK</th></tr>
+                    <tr>
+                      <th>NO.</th><th>NI PPPK / NIP</th><th>NAMA PEGAWAI</th><th>JENIS KELAMIN</th>
+                      <th>TEMPAT TANGGAL LAHIR</th><th>GOLONGAN</th><th>NAMA JABATAN</th><th>NAMA SATKER</th>
+                      <th>TANGGAL MULAI KONTRAK</th><th>TANGGAL BERAKHIR KONTRAK</th>
+                      <th>SURAT PERSETUJUAN</th><th>PERJANJIAN KERJA</th>
+                    </tr>
                   </thead>
                   <tbody id="tabelHasilCetak"><tr><td colspan="12" class="text-center">Silakan pilih filter atau ketik pencarian.</td></tr></tbody>
                 </table>
@@ -236,213 +286,175 @@
             </div>
           </div>
 
-          <!-- TAB 5: UPLOAD MASSAL PERJANJIAN KERJA -->
+          <!-- TAB 5: UPLOAD DOKUMEN MASSAL PERJANJIAN KERJA (VIA TAUTAN / FOLDER) -->
           <div class="tab-pane fade" id="batchUpload" role="tabpanel">
-            <h5 class="mb-3 text-primary fw-bold">Penautan Dokumen Massal Perjanjian Kerja</h5>
+            <h5 class="mb-3 text-primary fw-bold">Penautan Dokumen Massal Perjanjian Kerja (Fleksibel: Per File / Folder)</h5>
+            
             <div class="alert alert-warning p-3 mb-3" style="font-size: 13px;">
-              📌 Buat Folder Drive, beri nama file <code>NIP_Nama.pdf</code>, atur izin ke <i>Anyone with the link</i>, lalu tempel tautan foldernya.
+              📌 <b>Aturan & Panduan Penggunaan Tautan:</b><br>
+              - Buat 1 Folder Google Drive khusus Satker tersebut, masukkan seluruh file PDF dengan nama berformat <b>NIP_NamaPanggilan.pdf</b> (Contoh: <code>199804012026011001_fulan.pdf</code>). Atur akses berbagi <b>foldernya</b> menjadi <b>"Anyone with the link" (Viewer)</b>, lalu salin tautan folder tersebut ke sini.<br>
+              
+              - Sistem akan secara otomatis mencocokkan nama file dengan NIP pegawai di Spreadsheet!
             </div>
+
             <form id="pdfBatchForm" onsubmit="handleTautanMassalSubmit(event)">
               <div class="mb-3">
-                <label class="form-label fw-bold">Filter Satuan Kerja</label>
-                <input class="form-control" list="satkerOptionsBatch" id="selectSatkerBatch" placeholder="Pilih Satker..." required>
+                <label class="form-label fw-bold">Filter Satuan Kerja (Satker) - Ketik atau Pilih</label>
+                <input class="form-control" list="satkerOptionsBatch" id="selectSatkerBatch" placeholder="Ketik atau pilih Satker..." required>
                 <datalist id="satkerOptionsBatch"></datalist>
               </div>
+
               <div class="mb-3">
-                <label class="form-label fw-bold">Tempel Tautan Folder Google Drive</label>
-                <input type="url" class="form-control" id="linkMassalInput" placeholder="https://drive.google.com/drive/folders/..." required>
+                <label class="form-label fw-bold">Tempel Tautan Folder Google Drive atau Tautan File</label>
+                <input type="url" class="form-control" id="linkMassalInput" placeholder="https://drive.google.com/drive/folders/... atau Link File" required>
+                <small class="text-muted">Sistem akan otomatis memindai dan menautkan dokumen ke data pegawai yang sesuai.</small>
               </div>
+
               <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" id="pdfBatchSubmitBtn">🚀 Proses & Tautkan Otomatis</button>
             </form>
+
             <div id="pdfBatchAlertBox" class="mt-3"></div>
           </div>
 
-          <!-- TAB 6: HELPDESK & BANTUAN (TAMPILAN MODERN MINIMALIS YANG ANDA INGINKAN) -->
-          <div class="tab-pane fade helpdesk-scope" id="helpdeskArea" role="tabpanel">
-            
-            <!-- Header Helpdesk -->
-            <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 pb-4 border-b border-slate-200">
-                <div>
-                    <h2 class="text-xl font-bold text-slate-900 flex items-center">
-                        <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mr-3 text-sm">
-                            <i class="fa-solid fa-headset"></i>
-                        </span>
-                        Pusat Bantuan & Layanan Helpdesk
+          <!-- TAB 6: HELPDESK LENGKAP (FAQ, LIVE CHAT, PANEL ADMIN & TIKET) -->
+          <div class="tab-pane fade" id="helpdeskArea" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0 text-info fw-bold">🛟 Pusat Bantuan & Layanan Helpdesk</h5>
+              <button class="btn btn-sm btn-dark fw-bold" onclick="toggleAdminPanel()">🛠️ Buka / Tutup Panel Admin Response</button>
+            </div>
+            <p class="text-muted mb-3" style="font-size: 13px;">Klik tombol interaktif di bawah untuk membuka Panduan FAQ atau Live Chat Asisten.</p>
+
+            <!-- PANEL ADMIN RESPONSE DENGAN PASSWORD -->
+            <div id="adminPanel" class="card border-danger shadow-sm mb-4 d-none">
+              <div class="card-header bg-danger text-white fw-bold d-flex justify-content-between align-items-center" style="font-size: 13px;">
+                <span>🛠️ Panel Admin: Kelola & Respon Semua Tiket</span>
+                <button class="btn btn-sm btn-light py-0 px-2" style="font-size: 11px;" onclick="loadAdminTickets()">🔄 Muat Ulang Tiket</button>
+              </div>
+              <div class="card-body bg-white p-3">
+                <div class="table-responsive">
+                  <table class="table table-bordered table-sm align-middle" style="font-size: 11px;">
+                    <thead class="table-dark text-center">
+                      <tr><th>WAKTU</th><th>PELAPOR / KATEGORI</th><th>PESAN KENDALA</th><th>STATUS</th><th>BALASAN ADMIN</th><th>AKSI</th></tr>
+                    </thead>
+                    <tbody id="adminTicketTable"><tr><td colspan="6" class="text-center">Memuat tiket...</td></tr></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- TOMBOL INTERAKTIF FAQ & LIVE CHAT -->
+            <div class="row g-2 mb-3">
+              <div class="col-md-6">
+                <button type="button" class="btn btn-outline-primary w-100 py-2 fw-bold help-action-btn d-flex align-items-center justify-content-center" onclick="toggleFaqSection()">
+                  <span class="fs-5 me-2">❓</span> Buka / Tutup Panduan FAQ & Tanya Jawab
+                </button>
+              </div>
+              <div class="col-md-6">
+                <button type="button" class="btn btn-outline-success w-100 py-2 fw-bold help-action-btn d-flex align-items-center justify-content-center" onclick="toggleChatSection()">
+                  <span class="fs-5 me-2">💬</span> Buka / Tutup Live Chat Asisten
+                </button>
+              </div>
+            </div>
+
+            <!-- KOTAK FAQ ORIGINAL LENGKAP -->
+            <div id="faqSection" class="card shadow-sm mb-3 border-primary">
+              <div class="card-header bg-primary text-white py-2 fw-bold" style="font-size: 13px;">📌 FAQ & Panduan Lengkap Aplikasi</div>
+              <div class="card-body p-3" style="max-height: 280px; overflow-y: auto;">
+                <div class="accordion accordion-flush" id="faqAccordion">
+                  <div class="accordion-item mb-2 border rounded">
+                    <h2 class="accordion-header" id="headingOne">
+                      <button class="accordion-button py-2 fw-bold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" style="font-size: 12px;">1. Bagaimana cara melakukan input data pegawai baru?</button>
                     </h2>
-                    <p class="text-sm text-slate-500 mt-1">Temukan panduan cepat, mulai live chat, atau kirimkan tiket kendala Anda di sini.</p>
+                    <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                      <div class="accordion-body py-2 text-secondary" style="font-size: 11px;">Buka menu <b>Input Manual Per-nama</b>, lalu ketik NIP atau Nama pegawai. Sistem akan otomatis menarik data dasar dari sheet <i>config</i>. Jika NIP sudah terdaftar, form otomatis masuk ke <i>Mode Edit</i> untuk memperbarui data.</div>
+                    </div>
+                  </div>
+                  <div class="accordion-item mb-2 border rounded">
+                    <h2 class="accordion-header" id="headingTwo">
+                      <button class="accordion-button collapsed py-2 fw-bold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" style="font-size: 12px;">2. Bagaimana aturan penautan dokumen massal Perjanjian Kerja?</button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                      <div class="accordion-body py-2 text-secondary" style="font-size: 11px;">Buat folder Google Drive untuk Satker, pastikan nama file berformat <b>NIP_Nama.pdf</b> (contoh: <code>199804012026011001_fulan.pdf</code>), atur izin folder ke <i>Anyone with the link</i>, lalu tempel tautan foldernya.</div>
+                    </div>
+                  </div>
+                  <div class="accordion-item mb-2 border rounded">
+                    <h2 class="accordion-header" id="headingThree">
+                      <button class="accordion-button collapsed py-2 fw-bold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" style="font-size: 12px;">3. Kapan batas akhir pengisian dan pengusulan data?</button>
+                    </h2>
+                    <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                      <div class="accordion-body py-2 text-secondary" style="font-size: 11px;">Batas akhir pengusulan dan pengisian seluruh data serta kelengkapan dokumen adalah tanggal <b>6 Oktober 2026 pukul 23:59 WIB</b>.</div>
+                    </div>
+                  </div>
                 </div>
-                <div class="mt-4 md:mt-0">
-                    <button onclick="toggleAdminPanel()" class="inline-flex items-center px-4 py-2 text-xs font-semibold rounded-lg text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition shadow-sm">
-                        <i class="fa-solid fa-shield-halved mr-2 text-amber-500"></i> Panel Admin Response
-                    </button>
-                </div>
-            </div>
-
-            <!-- Panel Admin Response (Hidden by default) -->
-            <div id="adminPanel" class="hidden mb-6 bg-white rounded-2xl shadow-sm border border-red-200 overflow-hidden">
-              <div class="bg-red-600 text-white px-5 py-3 flex justify-between items-center text-xs font-bold">
-                <span>🛠️️ Panel Admin: Kelola & Respon Semua Tiket</span>
-                <button class="px-2.5 py-1 bg-white text-red-600 rounded text-[11px]" onclick="loadAdminTickets()">🔄 Muat Ulang</button>
-              </div>
-              <div class="p-4 overflow-x-auto">
-                <table class="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr class="bg-slate-100 border-b text-slate-700">
-                      <th class="p-2.5">Waktu</th><th class="p-2.5">Pelapor / Kategori</th><th class="p-2.5">Pesan Kendala</th><th class="p-2.5">Status</th><th class="p-2.5">Balasan Admin</th><th class="p-2.5">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody id="adminTicketTable" class="divide-y divide-slate-100">
-                    <tr><td colspan="6" class="text-center p-3 text-slate-500">Memuat tiket...</td></tr>
-                  </tbody>
-                </table>
               </div>
             </div>
 
-            <!-- Sub-Tab Interaktif Helpdesk -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="flex border-b border-slate-200 bg-slate-50/50 px-4 pt-3 space-x-2">
-                    <button onclick="switchHelpTab('faq')" id="tab-btn-faq" class="help-tab-btn px-5 py-3 text-sm font-semibold rounded-t-xl border-b-2 border-blue-600 text-blue-600 bg-white transition flex items-center">
-                        <i class="fa-solid fa-circle-question mr-2"></i> Panduan FAQ
-                    </button>
-                    <button onclick="switchHelpTab('chat')" id="tab-btn-chat" class="help-tab-btn px-5 py-3 text-sm font-semibold rounded-t-xl border-b-2 border-transparent text-slate-600 hover:text-blue-600 transition flex items-center">
-                        <i class="fa-solid fa-comments mr-2"></i> Live Chat Asisten
-                        <span class="ml-2 px-2 py-0.5 text-[10px] bg-emerald-100 text-emerald-700 rounded-full font-bold">Online</span>
-                    </button>
-                    <button onclick="switchHelpTab('ticket')" id="tab-btn-ticket" class="help-tab-btn px-5 py-3 text-sm font-semibold rounded-t-xl border-b-2 border-transparent text-slate-600 hover:text-blue-600 transition flex items-center">
-                        <i class="fa-solid fa-ticket mr-2"></i> Buat & Riwayat Tiket
-                    </button>
+            <!-- KOTAK LIVE CHAT -->
+            <div id="chatSection" class="card shadow-sm mb-3 d-none border-success">
+              <div class="card-header bg-success text-white py-2 fw-bold d-flex justify-content-between align-items-center" style="font-size: 13px;">
+                <span>💬 Live Chat Asisten & Pencarian Pegawai</span>
+                <span class="badge bg-light text-success" style="font-size: 9px;">Online</span>
+              </div>
+              <div class="card-body p-2">
+                <div class="chat-box mb-2" id="chatContainer">
+                  <div class="chat-bubble chat-admin">Halo! Ketik pertanyaan atau NIP/Nama pegawai untuk mencari data instan.</div>
                 </div>
-
-                <div class="p-6">
-                    <!-- HELP TAB 1: FAQ -->
-                    <div id="help-tab-faq" class="help-tab-content active space-y-4">
-                        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-                            <div>
-                                <h3 class="text-base font-bold text-slate-900">Pertanyaan yang Sering Diajukan</h3>
-                                <p class="text-xs text-slate-500">Cari solusi kilat untuk pertanyaan seputar penggunaan aplikasi.</p>
-                            </div>
-                            <div class="relative w-full sm:w-72">
-                                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-xs text-slate-400"></i>
-                                <input type="text" id="faqSearch" onkeyup="filterFaq()" placeholder="Cari topik atau kata kunci..." class="w-full pl-10 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition">
-                            </div>
-                        </div>
-
-                        <div class="space-y-3" id="faqContainer">
-                            <div class="faq-item border border-slate-200 rounded-xl overflow-hidden transition hover:border-blue-300">
-                                <button onclick="toggleAccordion(1)" class="w-full px-5 py-4 text-left font-medium text-sm text-slate-800 flex justify-between items-center bg-white hover:bg-slate-50 transition">
-                                    <span class="flex items-center"><i class="fa-solid fa-circle-question text-blue-600 mr-3 text-xs"></i>1. Bagaimana cara melakukan input data pegawai baru?</span>
-                                    <i id="icon-1" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
-                                </button>
-                                <div id="content-1" class="hidden px-5 py-4 bg-slate-50/50 border-t border-slate-100 text-xs text-slate-600 space-y-2">
-                                    <p>Buka menu <b>Input Manual Per-nama</b>, lalu ketik NIP atau Nama pegawai. Sistem akan otomatis menarik data dasar dari sheet <i>config</i>. Jika NIP sudah terdaftar, form otomatis masuk ke <i>Mode Edit</i>.</p>
-                                </div>
-                            </div>
-                            <div class="faq-item border border-slate-200 rounded-xl overflow-hidden transition hover:border-blue-300">
-                                <button onclick="toggleAccordion(2)" class="w-full px-5 py-4 text-left font-medium text-sm text-slate-800 flex justify-between items-center bg-white hover:bg-slate-50 transition">
-                                    <span class="flex items-center"><i class="fa-solid fa-circle-question text-blue-600 mr-3 text-xs"></i>2. Bagaimana aturan penautan dokumen massal Perjanjian Kerja?</span>
-                                    <i id="icon-2" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
-                                </button>
-                                <div id="content-2" class="hidden px-5 py-4 bg-slate-50/50 border-t border-slate-100 text-xs text-slate-600 space-y-2">
-                                    <p>Buat folder Google Drive untuk Satker, pastikan nama file berformat <code>NIP_Nama.pdf</code>, atur izin folder ke <i>Anyone with the link</i>, lalu tempel tautan foldernya.</p>
-                                </div>
-                            </div>
-                            <div class="faq-item border border-slate-200 rounded-xl overflow-hidden transition hover:border-blue-300">
-                                <button onclick="toggleAccordion(3)" class="w-full px-5 py-4 text-left font-medium text-sm text-slate-800 flex justify-between items-center bg-white hover:bg-slate-50 transition">
-                                    <span class="flex items-center"><i class="fa-solid fa-circle-question text-blue-600 mr-3 text-xs"></i>3. Kapan batas akhir pengisian dan pengusulan data?</span>
-                                    <i id="icon-3" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
-                                </button>
-                                <div id="content-3" class="hidden px-5 py-4 bg-slate-50/50 border-t border-slate-100 text-xs text-slate-600 space-y-2">
-                                    <p>Batas akhir pengusulan dan pengisian seluruh data adalah tanggal <b>6 Oktober 2026 pukul 23:59 WIB</b>.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- HELP TAB 2: LIVE CHAT -->
-                    <div id="help-tab-chat" class="help-tab-content space-y-4">
-                        <div class="max-w-2xl mx-auto border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 shadow-inner flex flex-col h-[400px]">
-                            <div class="bg-white px-5 py-3 border-b border-slate-200 flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <div class="relative">
-                                        <div class="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs">AI</div>
-                                        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
-                                    </div>
-                                    <div>
-                                        <h4 class="text-xs font-bold text-slate-900">Asisten Virtual & Pencarian Pegawai</h4>
-                                        <p class="text-[10px] text-emerald-600 font-medium">Aktif • Ketik NIP atau Nama untuk cek data instan</p>
-                                    </div>
-                                </div>
-                                <span class="text-[10px] bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">Online</span>
-                            </div>
-
-                            <div id="chatContainer" class="p-4 flex-grow overflow-y-auto space-y-3">
-                                <div class="flex items-start space-x-2">
-                                    <div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">AI</div>
-                                    <div class="bg-white p-3 rounded-2xl rounded-tl-sm shadow-sm border border-slate-200 text-xs text-slate-700 max-w-[80%]">
-                                        Halo! Ketik pertanyaan atau NIP/Nama pegawai untuk mencari data instan.
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="p-3 bg-white border-t border-slate-200 flex items-center space-x-2">
-                                <input type="text" id="chatInput" onkeypress="handleChatKey(event)" placeholder="Ketik pertanyaan atau NIP/Nama pegawai..." class="flex-grow px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition">
-                                <button onclick="sendChatAI()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition shadow-sm flex items-center">
-                                    <i class="fa-solid fa-paper-plane"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- HELP TAB 3: TIKET -->
-                    <div id="help-tab-ticket" class="help-tab-content space-y-6">
-                        <div>
-                            <h3 class="text-base font-bold text-slate-900">Formulir Pelaporan Kendala</h3>
-                            <p class="text-xs text-slate-500">Isi form di bawah ini jika kendala Anda tidak terselesaikan di FAQ atau Live Chat.</p>
-                        </div>
-
-                        <form id="ticketForm" onsubmit="handleTicketSubmit(event)" class="grid grid-cols-1 md:grid-cols-2 gap-5 bg-slate-50 p-6 rounded-2xl border border-slate-200">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nama Pelapor / Asal Satker <span class="text-red-500">*</span></label>
-                                <input type="text" id="ticketNama" required placeholder="Nama & Asal Satker..." oninput="simpanNamaPelapor(this.value)" class="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Kategori Kendala <span class="text-red-500">*</span></label>
-                                <select id="ticketKategori" class="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition">
-                                    <option value="Akses Tautan Gagal">Akses Tautan / Folder Gagal</option>
-                                    <option value="Data Pegawai Tidak Sesuai">Data Pegawai Tidak Sesuai</option>
-                                    <option value="Error Saat Input Massal (Import Excel)">Error Saat Input Massal (Import Excel)</option>
-                                    <option value="Lainnya">Lainnya</option>
-                                </select>
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Detail Keterangan <span class="text-red-500">*</span></label>
-                                <textarea id="ticketPesan" rows="3" required placeholder="Jelaskan kendala secara detail..." class="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition"></textarea>
-                            </div>
-                            <div class="md:col-span-2 flex justify-between items-center">
-                                <div id="ticketAlertBox" class="text-xs"></div>
-                                <button type="submit" id="ticketBtn" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition shadow-sm flex items-center">
-                                    <i class="fa-solid fa-paper-plane mr-2"></i> Kirim Tiket Laporan
-                                </button>
-                            </div>
-                        </form>
-
-                        <div class="mt-8">
-                            <div class="flex justify-between items-center mb-3">
-                                <h4 class="text-sm font-bold text-slate-900">Riwayat Laporan Anda</h4>
-                                <div class="space-x-2">
-                                    <button class="px-3 py-1 text-xs bg-blue-50 text-blue-600 font-semibold rounded-lg border border-blue-200 hover:bg-blue-100" onclick="bukaCekHistoryModal()">🔍 Cek Histori</button>
-                                    <button class="px-3 py-1 text-xs bg-slate-100 text-slate-600 font-semibold rounded-lg hover:bg-slate-200" onclick="clearTicketForm()">🔄 Reset</button>
-                                </div>
-                            </div>
-                            <div class="border border-slate-200 rounded-xl overflow-hidden bg-white p-4">
-                                <div id="ticketHistoryList" class="text-xs space-y-3">
-                                    <p class="text-slate-500 text-center py-2">Masukkan nama pelapor untuk melihat histori.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
+                <div class="input-group input-group-sm">
+                  <input type="text" class="form-control" id="chatInput" placeholder="Ketik pertanyaan atau NIP/Nama pegawai...">
+                  <button class="btn btn-success text-white fw-bold px-3" type="button" onclick="sendChatAI()">Kirim</button>
                 </div>
+              </div>
+            </div>
+
+            <!-- FORMULIR & HISTORI TIKET PELAPORAN -->
+            <div class="row g-3">
+              <div class="col-md-12">
+                <div class="card shadow-sm mb-3">
+                  <div class="card-header bg-primary text-white py-2 fw-bold" style="font-size: 13px;">🎫 Buat & Riwayat Tiket Pelaporan Kendala</div>
+                  <div class="card-body p-3">
+                    <form id="ticketForm" onsubmit="handleTicketSubmit(event)">
+                      <div class="row">
+                        <div class="col-md-4 mb-2">
+                          <label class="form-label fw-bold mb-1" style="font-size: 11px;">Nama Pelapor / Asal Satker</label>
+                          <input type="text" class="form-control form-control-sm" id="ticketNama" placeholder="Nama & Asal Satker..." required oninput="simpanNamaPelapor(this.value)">
+                        </div>
+                        <div class="col-md-4 mb-2">
+                          <label class="form-label fw-bold mb-1" style="font-size: 11px;">Kategori Kendala</label>
+                          <select class="form-select form-select-sm" id="ticketKategori">
+                            <option value="Akses Tautan Gagal">Akses Tautan / Folder Gagal</option>
+                            <option value="Data Pegawai Tidak Sesuai">Data Pegawai Tidak Sesuai</option>
+                            <option value="Error Saat Input Massal (Import Excel)">Error Saat Input Massal (Import Excel)</option>
+                            <option value="Lainnya">Lainnya</option>
+                          </select>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                          <label class="form-label fw-bold mb-1" style="font-size: 11px;">Aksi Cepat</label>
+                          <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold" id="ticketBtn">Kirim Tiket Laporan</button>
+                        </div>
+                      </div>
+                      <div class="mb-2">
+                        <label class="form-label fw-bold mb-1" style="font-size: 11px;">Detail Keterangan</label>
+                        <textarea class="form-control form-control-sm" id="ticketPesan" rows="2" placeholder="Jelaskan kendala secara detail..." required></textarea>
+                      </div>
+                    </form>
+                    <div id="ticketAlertBox" class="mt-2" style="font-size: 11px;"></div>
+
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <span class="fw-bold text-secondary" style="font-size: 11px;">📋 Histori Laporan Anda</span>
+                      <div>
+                        <button class="btn btn-sm btn-outline-primary py-0 px-1 me-1" style="font-size: 10px;" onclick="bukaCekHistoryModal()">🔍 Cek Histori</button>
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-1" style="font-size: 10px;" onclick="clearTicketForm()">🔄 Refresh</button>
+                      </div>
+                    </div>
+                    <div class="border rounded p-1 bg-white" style="max-height: 140px; overflow-y: auto;">
+                      <div id="ticketHistoryList" style="font-size: 11px;">
+                        <p class="text-muted text-center my-1">Masukkan nama untuk melihat histori.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
           </div>
@@ -470,23 +482,32 @@
     </div>
   </div>
 
-  <!-- JavaScript Logika Backend Utuh -->
   <script>
     var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydHdW6a_YPwH41E0V8-xq1SYDtZq9Y4C4ggntVXrTAC90BhYLAhIY8wQdnamok6YRa/exec";  
     var databasePegawaiCache = [];
 
     function callServer(action, payload, cb, errCb) {
       fetch(SCRIPT_URL, { 
-        method: "POST", mode: "cors",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        method: "POST", 
+        mode: "cors",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
         body: JSON.stringify({ action: action, payload: payload }) 
       })
       .then(res => res.json())
       .then(res => { 
-        if (res.status === "success") cb(res.data); 
-        else { if (errCb) errCb(new Error(res.message)); else alert("Error Server: " + res.message); } 
+        if (res.status === "success") {
+          cb(res.data); 
+        } else { 
+          if (errCb) errCb(new Error(res.message)); 
+          else alert("Error Server: " + res.message); 
+        } 
       })
-      .catch(err => { if (errCb) errCb(err); else alert("Koneksi Gagal: " + err.message); });
+      .catch(err => { 
+        if (errCb) errCb(err); 
+        else alert("Koneksi Gagal: " + err.message); 
+      });
     }
 
     var google = {
@@ -517,66 +538,80 @@
       muatNamaPelaporTersimpan();
     }
 
-    // Navigasi Sub-Tab Helpdesk
-    function switchHelpTab(tabName) {
-      document.querySelectorAll('.help-tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.help-tab-btn').forEach(btn => {
-        btn.classList.remove('border-blue-600', 'text-blue-600', 'bg-white');
-        btn.classList.add('border-transparent', 'text-slate-600');
-      });
-
-      document.getElementById('help-tab-' + tabName).classList.add('active');
-      const activeBtn = document.getElementById('tab-btn-' + tabName);
-      activeBtn.classList.remove('border-transparent', 'text-slate-600');
-      activeBtn.classList.add('border-blue-600', 'text-blue-600', 'bg-white');
-    }
-
-    function toggleAccordion(id) {
-      const content = document.getElementById('content-' + id);
-      const icon = document.getElementById('icon-' + id);
-      content.classList.toggle('hidden');
-      icon.classList.toggle('rotate-180');
-    }
-
-    function filterFaq() {
-      const input = document.getElementById('faqSearch').value.toLowerCase();
-      document.querySelectorAll('.faq-item').forEach(item => {
-        item.style.display = item.innerText.toLowerCase().includes(input) ? 'block' : 'none';
-      });
-    }
+    function toggleFaqSection() { document.getElementById('faqSection').classList.toggle('d-none'); }
+    function toggleChatSection() { document.getElementById('chatSection').classList.toggle('d-none'); }
 
     function loadDatabasePegawaiForInput() {
-      google.script.run.withSuccessHandler(function(dataList) {
-        databasePegawaiCache = dataList;
-        var niOptions = document.getElementById('niOptions');
-        var namaOptions = document.getElementById('namaOptions');
-        if (niOptions) niOptions.innerHTML = "";
-        if (namaOptions) namaOptions.innerHTML = "";
-        dataList.forEach(function(item) {
-          if (item.ni) { var o = document.createElement('option'); o.value = item.ni; niOptions.appendChild(o); }
-          if (item.nama) { var o2 = document.createElement('option'); o2.value = item.nama; namaOptions.appendChild(o2); }
-        });
-        var statusBox = document.getElementById('loadingStatus');
-        if (statusBox) { statusBox.className = "alert alert-success py-2 mb-3"; statusBox.innerHTML = "✅ Database sheet config berhasil dimuat."; }
-      }).getAllDataPegawai();
+      google.script.run
+        .withSuccessHandler(function(dataList) {
+          databasePegawaiCache = dataList;
+          var niOptions = document.getElementById('niOptions');
+          var namaOptions = document.getElementById('namaOptions');
+          if (niOptions) niOptions.innerHTML = "";
+          if (namaOptions) namaOptions.innerHTML = "";
+
+          dataList.forEach(function(item) {
+            if (item.ni) {
+              var optNi = document.createElement('option');
+              optNi.value = item.ni; optNi.label = item.nama;
+              niOptions.appendChild(optNi);
+            }
+            if (item.nama) {
+              var optNama = document.createElement('option');
+              optNama.value = item.nama; optNama.label = item.ni;
+              namaOptions.appendChild(optNama);
+            }
+          });
+
+          var statusBox = document.getElementById('loadingStatus');
+          if (statusBox) {
+            statusBox.className = "alert alert-success py-2 mb-3";
+            statusBox.innerHTML = "✅ Database sheet config berhasil dimuat.";
+            setTimeout(function() { statusBox.style.display = 'none'; }, 4000);
+          }
+        })
+        .getAllDataPegawai();
     }
 
     function isiOtomatisOlehNi(niVal) {
       if (!niVal) return;
-      var found = databasePegawaiCache.find(item => item.ni.toLowerCase() === niVal.trim().toLowerCase());
+      var cleanVal = niVal.trim().toLowerCase();
+      var found = databasePegawaiCache.find(item => item.ni.toLowerCase() === cleanVal);
       var alertBox = document.getElementById('modeEditAlert');
       var submitBtn = document.getElementById('submitBtn');
+
       if (found) {
         isiFormPegawai(found);
-        if (found.isInputed) { alertBox.classList.remove('d-none'); submitBtn.innerText = "Simpan Perubahan (Mode Edit)"; }
-        else { alertBox.classList.add('d-none'); submitBtn.innerText = "Simpan Data"; }
+        if (found.isInputed) {
+          alertBox.classList.remove('d-none');
+          submitBtn.innerText = "Simpan Perubahan (Mode Edit)";
+          submitBtn.className = "btn btn-warning w-100 py-2 fw-bold text-dark";
+        } else {
+          alertBox.classList.add('d-none');
+          submitBtn.innerText = "Simpan Data";
+          submitBtn.className = "btn btn-primary w-100 py-2 fw-bold";
+        }
       }
     }
 
     function isiOtomatisOlehNama(namaVal) {
       if (!namaVal) return;
-      var found = databasePegawaiCache.find(item => item.nama.toLowerCase() === namaVal.trim().toLowerCase());
-      if (found) { isiFormPegawai(found); }
+      var cleanVal = namaVal.trim().toLowerCase();
+      var found = databasePegawaiCache.find(item => item.nama.toLowerCase() === cleanVal);
+      if (found) {
+        isiFormPegawai(found);
+        var alertBox = document.getElementById('modeEditAlert');
+        var submitBtn = document.getElementById('submitBtn');
+        if (found.isInputed) {
+          alertBox.classList.remove('d-none');
+          submitBtn.innerText = "Simpan Perubahan (Mode Edit)";
+          submitBtn.className = "btn btn-warning w-100 py-2 fw-bold text-dark";
+        } else {
+          alertBox.classList.add('d-none');
+          submitBtn.innerText = "Simpan Data";
+          submitBtn.className = "btn btn-primary w-100 py-2 fw-bold";
+        }
+      }
     }
 
     function isiFormPegawai(data) {
@@ -591,8 +626,13 @@
 
     function resetFormManual() {
       document.getElementById('pegawaiForm').reset();
+      document.getElementById('tglMulai').value = "2026-11-01";
+      document.getElementById('tglAkhir').value = "2027-10-31";
       document.getElementById('modeEditAlert').classList.add('d-none');
-      document.getElementById('submitBtn').innerText = "Simpan Data";
+      var submitBtn = document.getElementById('submitBtn');
+      submitBtn.innerText = "Simpan Data";
+      submitBtn.className = "btn btn-primary w-100 py-2 fw-bold";
+      document.getElementById('alertBox').innerHTML = "";
     }
 
     function loadDashboardData() {
@@ -601,11 +641,18 @@
         document.getElementById('statInput').innerText = summary.sudahInput;
         document.getElementById('statSurat').innerText = summary.suratUpload;
         document.getElementById('statKontrak').innerText = summary.kontrakUpload;
+
         var tbody = document.getElementById('dashboardSatkerTable');
         tbody.innerHTML = "";
         for (var satker in summary.satkerDetail) {
           var d = summary.satkerDetail[satker];
-          tbody.innerHTML += `<tr><td><b>${satker}</b></td><td class="text-center">${d.target}</td><td class="text-center">${d.input}</td><td class="text-center">${d.surat} / ${d.target}</td><td class="text-center">${d.kontrak} / ${d.target}</td></tr>`;
+          tbody.innerHTML += `<tr>
+            <td><b>${satker}</b></td>
+            <td class="text-center">${d.target}</td>
+            <td class="text-center">${d.input}</td>
+            <td class="text-center">${d.surat} / ${d.target}</td>
+            <td class="text-center">${d.kontrak} / ${d.target}</td>
+          </tr>`;
         }
       }).getDashboardSummary();
     }
@@ -614,7 +661,10 @@
       google.script.run.withSuccessHandler(function(list) {
         ['satkerOptionsInput', 'satkerOptionsPdf', 'satkerOptionsCetak', 'satkerOptionsBatch'].forEach(id => {
           var el = document.getElementById(id);
-          if (el) { el.innerHTML = ""; list.forEach(s => { var opt = document.createElement('option'); opt.value = s; el.appendChild(opt); }); }
+          if (el) {
+            el.innerHTML = "";
+            list.forEach(s => { var opt = document.createElement('option'); opt.value = s; el.appendChild(opt); });
+          }
         });
       }).getDaftarSatker();
     }
@@ -625,77 +675,172 @@
       google.script.run.withSuccessHandler(function(data) {
         var tbody = document.getElementById('tabelHasilCetak');
         tbody.innerHTML = "";
-        if (!data.length) { tbody.innerHTML = '<tr><td colspan="12" class="text-center">Tidak ada data.</td></tr>'; return; }
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="12" class="text-center">Tidak ada data.</td></tr>';
+          return;
+        }
         data.forEach((item, idx) => {
-          tbody.innerHTML += `<tr><td class="text-center">${idx + 1}</td><td><b>${item.ni}</b></td><td>${item.nama}</td><td class="text-center">${item.jk}</td><td>${item.ttl}</td><td class="text-center">${item.gol}</td><td>${item.jabatan}</td><td>${item.satker}</td><td>${item.tglMulai}</td><td>${item.tglAkhir}</td><td class="text-center">${item.linkPersetujuan ? '<a href="'+item.linkPersetujuan+'" target="_blank">Lihat</a>' : '-'}</td><td class="text-center">${item.linkPerjanjian ? '<a href="'+item.linkPerjanjian+'" target="_blank">Lihat</a>' : '-'}</td></tr>`;
+          tbody.innerHTML += `<tr>
+            <td class="text-center">${idx + 1}</td>
+            <td><b>${item.ni}</b></td>
+            <td>${item.nama}</td>
+            <td class="text-center">${item.jk}</td>
+            <td>${item.ttl}</td>
+            <td class="text-center">${item.gol}</td>
+            <td>${item.jabatan}</td>
+            <td>${item.satker}</td>
+            <td>${item.tglMulai}</td>
+            <td>${item.tglAkhir}</td>
+            <td class="text-center">${item.linkPersetujuan ? '<a href="'+item.linkPersetujuan+'" target="_blank">Lihat Dokumen</a>' : 'Belum ada'}</td>
+            <td class="text-center">${item.linkPerjanjian ? '<a href="'+item.linkPerjanjian+'" target="_blank">Lihat Dokumen</a>' : 'Belum ada'}</td>
+          </tr>`;
         });
       }).cariDataPegawai(satker, keyword);
     }
 
     function exportTableToExcel() {
       var table = document.getElementById('tabelNominatif').cloneNode(true);
-      table.querySelectorAll('tr').forEach(row => { var c = row.querySelectorAll('th, td'); if(c.length >= 12){ c[11].remove(); c[10].remove(); } });
-      XLSX.writeFile(XLSX.utils.table_to_book(table, { raw: true }), "Rekap_Data_Pegawai.xlsx");
+      var rows = table.querySelectorAll('tr');
+      rows.forEach(row => {
+        var cells = row.querySelectorAll('th, td');
+        if (cells.length >= 12) {
+          cells[11].remove();
+          cells[10].remove();
+        }
+      });
+      var wb = XLSX.utils.table_to_book(table, { raw: true });
+      XLSX.writeFile(wb, "Rekap_Data_Pegawai.xlsx");
     }
 
     function downloadExcelTemplate() {
-      var xml = '<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="config"><Table><Row><Cell><Data ss:Type="String">NI PPPK</Data></Cell><Cell><Data ss:Type="String">NAMA PEGAWAI</Data></Cell></Row></Table></Worksheet></Workbook>';
-      var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([xml], { type: 'application/vnd.ms-excel' })); a.download = "template.xls"; a.click();
+      var excelXML = '<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' +
+        '<Worksheet ss:Name="config"><Table>' +
+        '<Row><Cell><Data ss:Type="String">NO.</Data></Cell><Cell><Data ss:Type="String">NI PPPK</Data></Cell><Cell><Data ss:Type="String">NAMA PEGAWAI</Data></Cell><Cell><Data ss:Type="String">JENIS KELAMIN</Data></Cell><Cell><Data ss:Type="String">TEMPAT TANGGAL LAHIR</Data></Cell><Cell><Data ss:Type="String">GOLONGAN</Data></Cell><Cell><Data ss:Type="String">NAMA JABATAN</Data></Cell><Cell><Data ss:Type="String">NAMA SATUAN KERJA</Data></Cell></Row>' +
+        '</Table></Worksheet></Workbook>';
+      var blob = new Blob([excelXML], { type: 'application/vnd.ms-excel' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a'); a.href = url; a.download = "template_import_pegawai.xls";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
     function handleFormSubmit(event) {
       event.preventDefault();
-      var btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "Menyimpan...";
-      var fd = {
-        niPppk: document.getElementById('niPppk').value, namaPegawai: document.getElementById('namaPegawai').value,
-        jenisKelamin: document.getElementById('jenisKelamin').value, ttl: document.getElementById('ttl').value,
-        golongan: document.getElementById('golongan').value, namaJabatan: document.getElementById('namaJabatan').value,
-        namaSatker: document.getElementById('namaSatker').value, tglMulai: document.getElementById('tglMulai').value, tglAkhir: document.getElementById('tglAkhir').value
+      var btn = document.getElementById('submitBtn');
+      btn.disabled = true; btn.innerText = "Menyimpan...";
+
+      var formData = {
+        niPppk: document.getElementById('niPppk').value,
+        namaPegawai: document.getElementById('namaPegawai').value,
+        jenisKelamin: document.getElementById('jenisKelamin').value,
+        ttl: document.getElementById('ttl').value,
+        golongan: document.getElementById('golongan').value,
+        namaJabatan: document.getElementById('namaJabatan').value,
+        namaSatker: document.getElementById('namaSatker').value,
+        tglMulai: document.getElementById('tglMulai').value,
+        tglAkhir: document.getElementById('tglAkhir').value
       };
-      google.script.run.withSuccessHandler(res => {
-        document.getElementById('alertBox').innerHTML = '<div class="alert alert-success">' + res + '</div>';
-        resetFormManual(); btn.disabled = false; btn.innerText = "Simpan Data"; initApp();
-      }).simpanData(fd);
+
+      google.script.run
+        .withSuccessHandler(res => {
+          document.getElementById('alertBox').innerHTML = '<div class="alert alert-success">' + res + '</div>';
+          resetFormManual(); btn.disabled = false; btn.innerText = "Simpan Data"; initApp();
+        })
+        .withFailureHandler(err => {
+          document.getElementById('alertBox').innerHTML = '<div class="alert alert-danger">Error: ' + err.message + '</div>';
+          btn.disabled = false; btn.innerText = "Simpan Data";
+        })
+        .simpanData(formData);
     }
 
     function handleImportExcel() {
-      var f = document.getElementById('excelFile'); if(!f.files.length) return alert("Pilih file!");
-      var r = new FileReader(); r.onload = function(e) {
-        google.script.run.withSuccessHandler(res => { document.getElementById('importAlertBox').innerHTML = '<div class="alert alert-success mt-3">' + res + '</div>'; initApp(); }).importDataExcel({ data: e.target.result.split(',')[1], fileName: f.files[0].name });
-      }; r.readAsDataURL(f.files[0]);
+      var fileInput = document.getElementById('excelFile');
+      if (!fileInput.files.length) return alert("Pilih file Excel!");
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        google.script.run.withSuccessHandler(res => {
+          document.getElementById('importAlertBox').innerHTML = '<div class="alert alert-success">' + res + '</div>';
+          initApp();
+        }).importDataExcel({ data: e.target.result.split(',')[1], fileName: fileInput.files[0].name, mimeType: fileInput.files[0].type });
+      };
+      reader.readAsDataURL(fileInput.files[0]);
     }
 
+    // Handler Penautan Surat Persetujuan via URL Tautan
     function handleTautanSuratSubmit(event) {
       event.preventDefault();
-      google.script.run.withSuccessHandler(res => {
-        document.getElementById('pdfAlertBox').innerHTML = '<div class="alert alert-success mt-3">' + res + '</div>';
-        document.getElementById('pdfForm').reset(); initApp();
-      }).simpanTautanSuratPersetujuan({ satker: document.getElementById('selectSatkerPdf').value, linkUrl: document.getElementById('linkSuratPersetujuan').value });
+      var satker = document.getElementById('selectSatkerPdf').value;
+      var linkUrl = document.getElementById('linkSuratPersetujuan').value;
+      var btn = document.getElementById('pdfSubmitBtn');
+      
+      btn.disabled = true;
+      btn.innerText = "Menyimpan Tautan...";
+
+      google.script.run
+        .withSuccessHandler(res => {
+          document.getElementById('pdfAlertBox').innerHTML = '<div class="alert alert-success">' + res + '</div>';
+          document.getElementById('pdfForm').reset();
+          btn.disabled = false;
+          btn.innerText = "Simpan & Tautkan ke Satker";
+          initApp();
+        })
+        .withFailureHandler(err => {
+          document.getElementById('pdfAlertBox').innerHTML = '<div class="alert alert-danger">Error: ' + err.message + '</div>';
+          btn.disabled = false;
+          btn.innerText = "Simpan & Tautkan ke Satker";
+        })
+        .simpanTautanSuratPersetujuan({ satker: satker, linkUrl: linkUrl });
     }
 
+    // Handler Penautan Dokumen Massal Perjanjian Kerja via URL Tautan / Folder
     function handleTautanMassalSubmit(event) {
       event.preventDefault();
-      google.script.run.withSuccessHandler(res => {
-        document.getElementById('pdfBatchAlertBox').innerHTML = '<div class="alert alert-success mt-3">' + res + '</div>';
-        document.getElementById('pdfBatchForm').reset(); initApp();
-      }).simpanTautanDokumenMassal({ satker: document.getElementById('selectSatkerBatch').value, linkInput: document.getElementById('linkMassalInput').value });
+      var satker = document.getElementById('selectSatkerBatch').value;
+      var linkInput = document.getElementById('linkMassalInput').value;
+      var btn = document.getElementById('pdfBatchSubmitBtn');
+
+      btn.disabled = true;
+      btn.innerText = "Memproses & Mencocokkan...";
+
+      google.script.run
+        .withSuccessHandler(res => {
+          document.getElementById('pdfBatchAlertBox').innerHTML = '<div class="alert alert-success">' + res + '</div>';
+          document.getElementById('pdfBatchForm').reset();
+          btn.disabled = false;
+          btn.innerText = "🚀 Proses & Tautkan Otomatis";
+          initApp();
+        })
+        .withFailureHandler(err => {
+          document.getElementById('pdfBatchAlertBox').innerHTML = '<div class="alert alert-danger">Error: ' + err.message + '</div>';
+          btn.disabled = false;
+          btn.innerText = "🚀 Proses & Tautkan Otomatis";
+        })
+        .simpanTautanDokumenMassal({ satker: satker, linkInput: linkInput });
     }
 
     function sendChatAI() {
-      var input = document.getElementById('chatInput'); var c = document.getElementById('chatContainer'); var text = input.value.trim(); if (!text) return;
-      c.innerHTML += `<div class="flex items-start justify-end"><div class="bg-blue-600 text-white p-3 rounded-2xl rounded-tr-sm text-xs max-w-[80%]">${text}</div></div>`;
-      input.value = ""; c.scrollTop = c.scrollHeight;
+      var input = document.getElementById('chatInput');
+      var container = document.getElementById('chatContainer');
+      var text = input.value.trim();
+      if (!text) return;
+
+      container.innerHTML += `<div class="chat-bubble chat-user">${text}</div>`;
+      input.value = ""; container.scrollTop = container.scrollHeight;
+
       setTimeout(function() {
-        var reply = "Maaf, informasi tidak ditemukan."; var lower = text.toLowerCase();
+        var reply = "Maaf, informasi tidak ditemukan.";
+        var lower = text.toLowerCase();
         var found = databasePegawaiCache.find(item => item.ni.toLowerCase() === lower || item.nama.toLowerCase().includes(lower));
         if (found) {
           reply = `📄 <b>Ditemukan Data Pegawai:</b><br>- <b>Nama:</b> ${found.nama}<br>- <b>NIP:</b> ${found.ni}<br>- <b>Jabatan:</b> ${found.jabatan}<br>- <b>Satker:</b> ${found.satker}<br>- <b>Status:</b> ${found.isInputed ? 'Sudah Input ✅' : 'Belum Input ❌'}`;
-        } else { reply = "Silakan tanyakan seputar alur aplikasi atau ketik NIP/Nama pegawai untuk melihat kartu data instan."; }
-        c.innerHTML += `<div class="flex items-start space-x-2"><div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">AI</div><div class="bg-white p-3 rounded-2xl rounded-tl-sm shadow-sm border text-xs text-slate-700 max-w-[80%]">${reply}</div></div>`;
-        c.scrollTop = c.scrollHeight;
+        } else if (lower.includes("upload") || lower.includes("tautan") || lower.includes("folder")) {
+          reply = "Untuk penautan dokumen massal, buat folder Google Drive, beri nama file NIP_Nama.pdf, atur izin folder ke 'Anyone with the link', lalu tempel tautan foldernya.";
+        } else {
+          reply = "Silakan tanyakan seputar alur aplikasi atau ketik NIP/Nama pegawai untuk melihat kartu data instan.";
+        }
+        container.innerHTML += `<div class="chat-bubble chat-admin">${reply}</div>`;
+        container.scrollTop = container.scrollHeight;
       }, 500);
     }
-    function handleChatKey(e) { if(e.key === 'Enter') sendChatAI(); }
 
     function simpanNamaPelapor(nama) {
       if (!nama || !nama.trim()) return;
@@ -711,8 +856,9 @@
 
     function clearTicketForm() {
       localStorage.removeItem('pppk_pelapor_nama');
-      document.getElementById('ticketNama').value = ""; document.getElementById('ticketPesan').value = "";
-      document.getElementById('ticketHistoryList').innerHTML = '<p class="text-slate-500 text-center py-2">Form dibersihkan.</p>';
+      document.getElementById('ticketNama').value = "";
+      document.getElementById('ticketPesan').value = "";
+      document.getElementById('ticketHistoryList').innerHTML = '<p class="text-muted text-center my-1">Form dibersihkan.</p>';
     }
 
     function bukaCekHistoryModal() {
@@ -727,30 +873,36 @@
       if (!chosen) return alert("Pilih nama terlebih dahulu!");
       document.getElementById('ticketNama').value = chosen;
       localStorage.setItem('pppk_pelapor_nama', chosen);
-      loadTicketHistory(); bootstrap.Modal.getInstance(document.getElementById('historyModal')).hide();
+      loadTicketHistory();
+      bootstrap.Modal.getInstance(document.getElementById('historyModal')).hide();
     }
 
     function handleTicketSubmit(event) {
       event.preventDefault();
-      var data = { nama: document.getElementById('ticketNama').value.trim(), kategori: document.getElementById('ticketKategori').value, pesan: document.getElementById('ticketPesan').value.trim() };
+      var data = {
+        nama: document.getElementById('ticketNama').value.trim(),
+        kategori: document.getElementById('ticketKategori').value,
+        pesan: document.getElementById('ticketPesan').value.trim()
+      };
       simpanNamaPelapor(data.nama);
       google.script.run.withSuccessHandler(res => {
-        document.getElementById('ticketAlertBox').innerHTML = '<span class="text-emerald-600 font-bold">' + res + '</span>';
-        document.getElementById('ticketPesan').value = ""; loadTicketHistory();
+        document.getElementById('ticketAlertBox').innerHTML = '<div class="alert alert-success py-1 mb-0">' + res + '</div>';
+        document.getElementById('ticketPesan').value = "";
+        loadTicketHistory();
       }).submitTicket(data);
     }
 
     function loadTicketHistory() {
       var activeUser = localStorage.getItem('pppk_pelapor_nama') || document.getElementById('ticketNama').value.trim();
       var container = document.getElementById('ticketHistoryList');
-      if (!activeUser) { container.innerHTML = '<p class="text-slate-500 text-center py-2">Masukkan nama pelapor.</p>'; return; }
+      if (!activeUser) { container.innerHTML = '<p class="text-muted text-center my-1">Masukkan nama pelapor.</p>'; return; }
       google.script.run.withSuccessHandler(list => {
         container.innerHTML = "";
         var myTickets = list.filter(t => t.nama.toLowerCase() === activeUser.toLowerCase());
-        if (!myTickets.length) { container.innerHTML = '<p class="text-slate-500 text-center py-2">Belum ada histori.</p>'; return; }
+        if (!myTickets.length) { container.innerHTML = '<p class="text-muted text-center my-1">Belum ada histori.</p>'; return; }
         myTickets.forEach(t => {
-          var badge = t.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700';
-          container.innerHTML += `<div class="border-b pb-2 mb-2"><div class="flex justify-between font-bold"><span>${t.kategori}</span><span class="px-2 py-0.5 rounded text-[10px] ${badge}">${t.status}</span></div><p class="text-slate-600 mt-1">${t.pesan}</p>${t.balasan ? '<div class="text-blue-600 mt-1"><b>Balasan:</b> '+t.balasan+'</div>' : ''}<span class="text-[10px] text-slate-400">${t.tanggal}</span></div>`;
+          var badge = t.status === 'Selesai' ? 'bg-success' : 'bg-warning text-dark';
+          container.innerHTML += `<div class="border-bottom pb-1 mb-1"><div class="d-flex justify-content-between"><b>${t.kategori}</b><span class="badge ${badge}" style="font-size:8px;">${t.status}</span></div><p class="mb-0 text-muted">${t.pesan}</p>${t.balasan ? '<div class="text-primary mt-1"><b>Balasan:</b> '+t.balasan+'</div>' : ''}<small class="text-secondary" style="font-size:9px;">${t.tanggal}</small></div>`;
         });
       }).getTicketHistory();
     }
@@ -759,48 +911,80 @@
       var pwd = prompt("Masukkan Password Admin:");
       if (pwd === "osdm321") {
         var panel = document.getElementById('adminPanel');
-        panel.classList.toggle('hidden');
-        if (!panel.classList.contains('hidden')) loadAdminTickets();
+        panel.classList.toggle('d-none');
+        if (!panel.classList.contains('d-none')) loadAdminTickets();
       } else if (pwd !== null) { alert("Password salah!"); }
     }
 
     function loadAdminTickets() {
       google.script.run.withSuccessHandler(list => {
-        var tbody = document.getElementById('adminTicketTable'); tbody.innerHTML = "";
-        if (!list.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center p-3">Belum ada tiket.</td></tr>'; return; }
+        var tbody = document.getElementById('adminTicketTable');
+        tbody.innerHTML = "";
+        if (!list.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center">Belum ada tiket.</td></tr>'; return; }
         list.forEach(t => {
           tbody.innerHTML += `<tr>
-            <td class="p-2 text-center">${t.tanggal}</td>
-            <td class="p-2"><b>${t.nama}</b><br><span class="text-[10px] text-slate-500">${t.kategori}</span></td>
-            <td class="p-2">${t.pesan}</td>
-            <td class="p-2"><select id="status_${t.rowIndex}" class="border rounded px-1 py-1 text-xs"><option value="Menunggu Konfirmasi" ${t.status=='Menunggu Konfirmasi'?'selected':''}>Menunggu</option><option value="Diproses" ${t.status=='Diproses'?'selected':''}>Diproses</option><option value="Selesai" ${t.status=='Selesai'?'selected':''}>Selesai</option></select></td>
-            <td class="p-2"><input type="text" id="balasan_${t.rowIndex}" class="border rounded px-2 py-1 text-xs w-full" value="${t.balasan||''}"></td>
-            <td class="p-2 text-center"><button class="px-3 py-1 bg-emerald-600 text-white rounded text-xs font-bold hover:bg-emerald-700" onclick="saveAdminResponse(${t.rowIndex})">Simpan</button></td>
+            <td class="text-center">${t.tanggal}</td>
+            <td><b>${t.nama}</b><br><small class="text-muted">${t.kategori}</small></td>
+            <td>${t.pesan}</td>
+            <td class="text-center"><select id="status_${t.rowIndex}" class="form-select form-select-sm" style="font-size:10px;"><option value="Menunggu Konfirmasi" ${t.status=='Menunggu Konfirmasi'?'selected':''}>Menunggu</option><option value="Diproses" ${t.status=='Diproses'?'selected':''}>Diproses</option><option value="Selesai" ${t.status=='Selesai'?'selected':''}>Selesai</option></select></td>
+            <td><input type="text" id="balasan_${t.rowIndex}" class="form-control form-control-sm" value="${t.balasan||''}" style="font-size:10px;"></td>
+            <td class="text-center"><button class="btn btn-sm btn-success py-0 px-2" style="font-size:10px;" onclick="saveAdminResponse(${t.rowIndex})">Simpan</button></td>
           </tr>`;
         });
       }).getTicketHistory();
     }
 
     function saveAdminResponse(idx) {
-      google.script.run.withSuccessHandler(res => { alert(res); loadAdminTickets(); }).adminUpdateTicket({ rowIndex: idx, status: document.getElementById('status_' + idx).value, balasan: document.getElementById('balasan_' + idx).value });
+      var status = document.getElementById('status_' + idx).value;
+      var balasan = document.getElementById('balasan_' + idx).value;
+      google.script.run.withSuccessHandler(res => { alert(res); loadAdminTickets(); }).adminUpdateTicket({ rowIndex: idx, status: status, balasan: balasan });
     }
 
     function startCountdown() {
       var end = new Date("Oct 6, 2026 23:59:59").getTime();
       setInterval(() => {
         var dist = end - new Date().getTime();
-        var d = Math.floor(dist / (1000*60*60*24)), h = Math.floor((dist % (1000*60*60*24)) / (1000*60*60)), m = Math.floor((dist % (1000*60*60)) / (1000*60)), s = Math.floor((dist % (1000*60)) / 1000);
-        var el = document.getElementById("countdownDisplay"); if (el) el.innerHTML = `${d} Hari ${h} Jam ${m} Mnt ${s} Dtk`;
+        var d = Math.floor(dist / (1000*60*60*24));
+        var h = Math.floor((dist % (1000*60*60*24)) / (1000*60*60));
+        var m = Math.floor((dist % (1000*60*60)) / (1000*60));
+        var s = Math.floor((dist % (1000*60)) / 1000);
+        var el = document.getElementById("countdownDisplay");
+        if (el) el.innerHTML = `${d} Hari ${h} Jam ${m} Mnt ${s} Dtk lagi`;
       }, 1000);
     }
+  function resetAplikasiTotal() {
+  // 1. Kosongkan semua kotak input teks / URL tautan di halaman
+  var semuaInput = document.querySelectorAll('input[type="text"], input[type="url"], textarea');
+  semuaInput.forEach(function(input) {
+    input.value = "";
+  });
 
-    function resetAplikasiTotal() {
-      document.querySelectorAll('input[type="text"], input[type="url"], textarea').forEach(el => el.value = "");
-      if (typeof resetFormManual === 'function') resetFormManual();
-      if (typeof initApp === 'function') initApp();
-    }
+  // 2. Reset elemen pilihan select jika ada
+  var semuaSelect = document.querySelectorAll('select');
+  semuaSelect.forEach(function(sel) {
+    sel.selectedIndex = 0;
+  });
+
+  // 3. Jalankan fungsi reset bawaan jika tersedia di aplikasi
+  if (typeof resetFormManual === 'function') {
+    resetFormManual();
+  }
+
+  // 4. Muat ulang data dashboard utama
+  if (typeof initApp === 'function') {
+    initApp();
+  }
+
+  // 5. Kosongkan tabel hasil pencarian/cetak jika ada
+  var tabelHasil = document.getElementById('tabelHasilCetak');
+  if (tabelHasil) {
+    tabelHasil.innerHTML = '<tr><td colspan="12" class="text-center text-muted">Tampilan telah di-refresh ke kondisi default.</td></tr>';
+  }
+
+  // Berikan sedikit notifikasi visual bahwa refresh berhasil
+  console.log("Aplikasi berhasil di-refresh.");
+}
   </script>
-  <!-- Bootstrap 5 JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
