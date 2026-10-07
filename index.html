@@ -26,7 +26,7 @@
 
     .announcement-bar {
       background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;
-      border-radius: 6px; padding: 10px 15px; margin-bottom: 20px; font-weight: 600; overflow: hidden; white-space: nowrap;
+      border-radius: 6px; padding: 10px 15px; font-weight: 600; overflow: hidden; white-space: nowrap;
     }
     .running-text { display: inline-block; animation: marquee 25s linear infinite; }
     @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
@@ -68,12 +68,22 @@
   <div class="container-fluid my-4 px-4">
     <div class="card shadow-sm mb-4">
       <div class="card-header bg-white border-bottom p-3">
-        <div class="announcement-bar">
+        
+        <!-- PENGUMUMAN BATAS WAKTU -->
+        <div class="announcement-bar" style="margin-bottom: 10px;">
           <div class="running-text">
-            ⚠️️ <b>Penting!</b> Batas Akhir Pengusulan dan Pengisian pada tanggal 12 Oktober 2026
+            ⚠ <b>Penting!</b> Batas Akhir Pengusulan dan Pengisian pada tanggal 9 Oktober 2026
             <span id="countdownDisplay" class="countdown-badge">Memuat Waktu...</span> ⏰
           </div>
         </div>
+
+        <!-- PERINGATAN OTK BARU -->
+        <div class="alert alert-warning py-2 mb-3" style="border: 1px solid #ffeeba; background-color: #fff3cd; color: #856404; font-weight: 600;">
+          <marquee behavior="scroll" direction="left" scrollamount="5">
+            ⚠️ <b>Perhatian:</b> Data Satuan Kerja pada Sistem Masih Menggunakan OTK Lama sesuai Pengangkatan PPPK PW, Harap Sesuaikan dengan perubahan setelah OTK Baru......!
+          </marquee>
+        </div>
+
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h4 class="mb-3 text-dark fw-bold mb-0">Manajemen Data Pegawai & Kontrak</h4>
           <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" onclick="document.querySelectorAll('input, textarea').forEach(el => el.value = ''); if(typeof initApp === 'function') initApp();">🔄 Refresh Tampilan</button>
@@ -297,7 +307,9 @@
             
             <div class="alert alert-warning p-3 mb-3" style="font-size: 13px;">
               📌 <b>Aturan & Panduan Penggunaan Tautan:</b><br>
-              - Buat 1 Folder Google Drive khusus Satker tersebut, masukkan seluruh file PDF dengan nama berformat <b>NIP_NamaPanggilan.pdf</b> (Contoh: <code>199804012026011001_fulan.pdf</code>). Atur akses berbagi <b>foldernya</b> menjadi <b>"Anyone with the link" (Viewer)</b>, lalu salin tautan folder tersebut ke sini.<br>
+              - Buat 1 Folder Google Drive khusus Satker tersebut, masukkan seluruh file PDF Perjanjian Kerja.<br>
+              - <b>PENTING:</b> Nama file <b>WAJIB</b> berformat <b>NIPPPKPW_NAMA.pdf</b> (Gunakan huruf kapital untuk nama. Contoh: <code>198603162025211131_M. KUSNADI.pdf</code>).<br>
+              - Atur akses berbagi <b>foldernya</b> menjadi <b>"Anyone with the link" (Viewer)</b>, lalu salin tautan folder tersebut ke sini.<br>
               - Sistem akan secara otomatis mencocokkan nama file dengan NIP pegawai di Spreadsheet!
             </div>
 
@@ -399,7 +411,7 @@
                         </button>
                       </h2>
                       <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                        <div class="accordion-body py-2 text-secondary" style="font-size: 11px;">Buat folder Google Drive untuk Satker, pastikan nama file berformat <b>NIP_Nama.pdf</b> (contoh: <code>199804012026011001_fulan.pdf</code>), atur izin folder ke <i>Anyone with the link</i>, lalu tempel tautan foldernya.</div>
+                        <div class="accordion-body py-2 text-secondary" style="font-size: 11px;">Buat folder Google Drive untuk Satker, pastikan nama file berformat <b>NIPPPKPW_NAMA.pdf</b> (contoh: <code>198603162025211131_M. KUSNADI.pdf</code>), atur izin folder ke <i>Anyone with the link</i>, lalu tempel tautan foldernya.</div>
                       </div>
                     </div>
                     <div class="accordion-item mb-2 border rounded faq-item">
@@ -409,7 +421,7 @@
                         </button>
                       </h2>
                       <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                        <div class="accordion-body py-2 text-secondary" style="font-size: 11px;">Batas akhir pengusulan dan pengisian seluruh data serta kelengkapan dokumen adalah tanggal <b>12 Oktober 2026 pukul 23:59 WIB</b>.</div>
+                        <div class="accordion-body py-2 text-secondary" style="font-size: 11px;">Batas akhir pengusulan dan pengisian seluruh data serta kelengkapan dokumen adalah tanggal <b>9 Oktober 2026 pukul 23:59 WIB</b>.</div>
                       </div>
                     </div>
                   </div>
@@ -502,6 +514,39 @@
             <select class="form-select form-select-sm" id="selectHistoryUser"><option value="">-- Pilih Nama dari Perangkat Ini --</option></select>
           </div>
           <button type="button" class="btn btn-primary btn-sm w-100 fw-bold" onclick="pilihUserDariDropdown()">Tampilkan Histori</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Detail Satker (Fitur Klik Dashboard) -->
+  <div class="modal fade" id="satkerDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white py-2">
+          <h6 class="modal-title fw-bold" id="satkerModalTitle">Detail Pegawai Satker</h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-3">
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm align-middle" style="font-size: 11px;">
+              <thead class="table-light text-center">
+                <tr>
+                  <th>NO</th>
+                  <th>NIP / NAMA PEGAWAI</th>
+                  <th>STATUS INPUT</th>
+                  <th>SURAT PERSETUJUAN</th>
+                  <th>PERJANJIAN KERJA</th>
+                </tr>
+              </thead>
+              <tbody id="satkerModalTableBody">
+                <tr><td colspan="5" class="text-center">Memuat detail pegawai...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer py-1">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
         </div>
       </div>
     </div>
@@ -660,7 +705,11 @@
         for (var satker in summary.satkerDetail) {
           var d = summary.satkerDetail[satker];
           tbody.innerHTML += `<tr>
-            <td><b>${satker}</b></td>
+            <td>
+              <a href="javascript:void(0)" class="text-decoration-none fw-bold text-primary" onclick="showSatkerDetail('${satker}')">
+                ${satker}
+              </a>
+            </td>
             <td class="text-center">${d.target}</td>
             <td class="text-center">${d.input}</td>
             <td class="text-center">${d.surat} / ${d.target}</td>
@@ -668,6 +717,45 @@
           </tr>`;
         }
       }).getDashboardSummary();
+    }
+
+    function showSatkerDetail(satkerName) {
+      document.getElementById('satkerModalTitle').innerText = "Detail Pegawai: " + satkerName;
+      var detailModal = new bootstrap.Modal(document.getElementById('satkerDetailModal'));
+      detailModal.show();
+
+      var tbody = document.getElementById('satkerModalTableBody');
+      tbody.innerHTML = "";
+      
+      var pegawaiSatkerIni = databasePegawaiCache.filter(item => item.satker && item.satker.toLowerCase() === satkerName.toLowerCase());
+
+      if (pegawaiSatkerIni.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Tidak ada data pegawai untuk satker ini.</td></tr>';
+      } else {
+        var counter = 1;
+        pegawaiSatkerIni.forEach(function(p) {
+          var badgeInput = p.isInputed 
+            ? '<span class="badge bg-success" style="font-size:9px;">Sudah Input</span>' 
+            : '<span class="badge bg-danger" style="font-size:9px;">Belum Input</span>';
+            
+          var linkSurat = (p.status && p.status.linkPersetujuan) 
+            ? `<a href="${p.status.linkPersetujuan}" target="_blank" class="text-success fw-bold">Lihat File</a>` 
+            : `<span class="text-muted">Belum ada</span>`;
+            
+          var linkPerjanjian = (p.status && p.status.linkPerjanjian) 
+            ? `<a href="${p.status.linkPerjanjian}" target="_blank" class="text-success fw-bold">Lihat File</a>` 
+            : `<span class="text-muted">Belum ada</span>`;
+
+          tbody.innerHTML += `<tr>
+            <td class="text-center">${counter}</td>
+            <td><b>${p.ni}</b><br><span class="text-muted">${p.nama}</span></td>
+            <td class="text-center">${badgeInput}</td>
+            <td class="text-center">${linkSurat}</td>
+            <td class="text-center">${linkPerjanjian}</td>
+          </tr>`;
+          counter++;
+        });
+      }
     }
 
     function loadSatkerDatalists() {
@@ -836,7 +924,7 @@
         if (found) {
           reply = `📄 <b>Ditemukan Data Pegawai:</b><br>- <b>Nama:</b> ${found.nama}<br>- <b>NIP:</b> ${found.ni}<br>- <b>Jabatan:</b> ${found.jabatan}<br>- <b>Satker:</b> ${found.satker}<br>- <b>Status:</b> ${found.isInputed ? 'Sudah Input ✅' : 'Belum Input ❌'}`;
         } else if (lower.includes("upload") || lower.includes("tautan") || lower.includes("folder")) {
-          reply = "Untuk penautan dokumen massal, buat folder Google Drive, beri nama file NIP_Nama.pdf, atur izin folder ke 'Anyone with the link', lalu tempel tautan foldernya.";
+          reply = "Untuk penautan dokumen massal, buat folder Google Drive, beri nama file NIPPPKPW_NAMA.pdf, atur izin folder ke 'Anyone with the link', lalu tempel tautan foldernya.";
         } else {
           reply = "Silakan tanyakan seputar alur aplikasi atau ketik NIP/Nama pegawai untuk melihat kartu data instan.";
         }
@@ -845,7 +933,6 @@
       }, 500);
     }
 
-    // Fungsi Pencarian / Filter FAQ
     function filterFaqItems() {
       var query = document.getElementById('faqSearchInput').value.toLowerCase();
       var items = document.querySelectorAll('.faq-item');
@@ -958,7 +1045,7 @@
     }
 
     function startCountdown() {
-      var end = new Date("Oct 12, 2026 23:59:59").getTime();
+      var end = new Date("2026-10-09T23:59:59").getTime();
       setInterval(() => {
         var dist = end - new Date().getTime();
         var d = Math.floor(dist / (1000*60*60*24));
