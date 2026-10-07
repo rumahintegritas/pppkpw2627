@@ -719,7 +719,25 @@
       }).getDashboardSummary();
     }
 
+    // Variabel untuk menyimpan status admin agar tidak perlu input password berkali-kali
+    var isAdminVerified = false; 
+
     function showSatkerDetail(satkerName) {
+      // 1. Cek Otorisasi Admin
+      if (!isAdminVerified) {
+        var pwd = prompt("Fitur Rincian Pegawai Khusus Admin.\nMasukkan Password Admin:");
+        
+        // Kita gunakan password yang sama dengan panel helpdesk ("osdm321")
+        if (pwd === "osdm321") {
+          isAdminVerified = true; // Beri izin akses
+        } else {
+          if (pwd !== null) {
+            alert("Password salah! Anda tidak memiliki akses untuk melihat rincian pegawai.");
+          }
+          return; // Hentikan proses di sini, modal TIDAK akan terbuka
+        }
+      }
+
       document.getElementById('satkerModalTitle').innerText = "Detail Pegawai: " + satkerName;
       var detailModal = new bootstrap.Modal(document.getElementById('satkerDetailModal'));
       detailModal.show();
