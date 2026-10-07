@@ -83,7 +83,10 @@
             ⚠️ <b>Perhatian:</b> Data Satuan Kerja pada Sistem Masih Menggunakan OTK Lama sesuai Pengangkatan PPPK PW, Harap Sesuaikan dengan perubahan setelah OTK Baru......!
           </marquee>
         </div>
-
+<!-- RUNNING TEXT SATKER BELUM SELESAI (Otomatis dari JavaScript) -->
+        <div id="containerBelumInput" class="alert alert-danger py-2 mb-3 d-none" style="border: 1px solid #f5c6cb; font-weight: 600;">
+          <marquee id="marqueeBelumInput" behavior="scroll" direction="left" scrollamount="6" class="text-danger"></marquee>
+        </div>
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h4 class="mb-3 text-dark fw-bold mb-0">Manajemen Data Pegawai & Kontrak</h4>
           <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" onclick="document.querySelectorAll('input, textarea').forEach(el => el.value = ''); if(typeof initApp === 'function') initApp();">🔄 Refresh Tampilan</button>
@@ -702,8 +705,17 @@
 
         var tbody = document.getElementById('dashboardSatkerTable');
         tbody.innerHTML = "";
+        
+        var satkerBelumSelesai = []; // Array untuk menampung nama Satker yang belum 100%
+
         for (var satker in summary.satkerDetail) {
           var d = summary.satkerDetail[satker];
+          
+          // Cek apakah ada yang kurang (Input, Surat, atau Kontrak belum sesuai target)
+          if (d.input < d.target || d.surat < d.target || d.kontrak < d.target) {
+            satkerBelumSelesai.push(satker);
+          }
+
           tbody.innerHTML += `<tr>
             <td>
               <a href="javascript:void(0)" class="text-decoration-none fw-bold text-primary" onclick="showSatkerDetail('${satker}')">
@@ -716,6 +728,19 @@
             <td class="text-center">${d.kontrak} / ${d.target}</td>
           </tr>`;
         }
+
+        // Tampilkan Running Text jika ada Satker yang belum selesai
+        var containerWarning = document.getElementById('containerBelumInput');
+        var marqueeWarning = document.getElementById('marqueeBelumInput');
+        
+        if (satkerBelumSelesai.length > 0) {
+          containerWarning.classList.remove('d-none');
+          marqueeWarning.innerHTML = "🚨 <b>PERHATIAN:</b> Satuan Kerja berikut belum menyelesaikan 100% Input Data / Upload Dokumen: &nbsp;&nbsp;&nbsp; <b>👉 " + satkerBelumSelesai.join(" &nbsp;|&nbsp; ") + " 👈</b> &nbsp;&nbsp;&nbsp; Mohon segera diselesaikan sebelum batas waktu!";
+        } else {
+          // Jika semua Satker sudah 100%, sembunyikan running text-nya
+          containerWarning.classList.add('d-none');
+        }
+
       }).getDashboardSummary();
     }
 
