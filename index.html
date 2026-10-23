@@ -276,16 +276,23 @@
             <p class="text-muted">Cari, saring berdasarkan Satker, cetak, atau unduh rekapitulasi data ke format Excel.</p>
             
             <div class="row g-3 mb-4">
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label class="form-label fw-bold">Filter Satuan Kerja (Satker) - Bisa Ketik</label>
                 <input class="form-control" list="satkerOptionsCetak" id="filterSatker" placeholder="Ketik atau pilih Satker..." oninput="filterDataCetak()" onchange="filterDataCetak()">
                 <datalist id="satkerOptionsCetak"></datalist>
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label class="form-label fw-bold">Cari Nama / NIP</label>
                 <input type="text" class="form-control" id="filterKeyword" placeholder="Ketik nama atau NI PPPK..." onkeyup="filterDataCetak()">
               </div>
-              <div class="col-md-4 d-flex align-items-end gap-2">
+              <div class="col-md-3">
+                <label class="form-label fw-bold">Mode Tampilan Kolom Cetak</label>
+                <select class="form-select fw-bold text-primary" id="modeCetak" onchange="toggleKolomCetak()">
+                  <option value="lengkap">📄 Lengkap (Dengan Kolom Dokumen)</option>
+                  <option value="tanpa-dokumen">📑 Tanpa Kolom Dokumen</option>
+                </select>
+              </div>
+              <div class="col-md-3 d-flex align-items-end gap-2">
                 <button type="button" class="btn btn-secondary w-50 fw-bold" onclick="window.print()">🖨️ Cetak</button>
                 <button type="button" class="btn btn-success w-50 fw-bold" onclick="exportTableToExcel()">📊 Export Excel</button>
               </div>
@@ -300,10 +307,18 @@
                 <table class="table table-bordered table-striped align-middle" style="font-size: 11px;" id="tabelNominatif">
                   <thead class="table-dark text-center">
                     <tr>
-                      <th>NO.</th><th>NI PPPK / NIP</th><th>NAMA PEGAWAI</th><th>JENIS KELAMIN</th>
-                      <th>TEMPAT TANGGAL LAHIR</th><th>GOLONGAN</th><th>NAMA JABATAN</th><th>NAMA SATKER</th>
-                      <th>TANGGAL MULAI KONTRAK</th><th>TANGGAL BERAKHIR KONTRAK</th>
-                      <th>SURAT PERSETUJUAN</th><th>PERJANJIAN KERJA</th>
+                      <th>NO.</th>
+                      <th>NI PPPK / NIP</th>
+                      <th>NAMA PEGAWAI</th>
+                      <th>JENIS KELAMIN</th>
+                      <th>TEMPAT TANGGAL LAHIR</th>
+                      <th>GOLONGAN</th>
+                      <th>NAMA JABATAN</th>
+                      <th>NAMA SATKER</th>
+                      <th>TANGGAL MULAI KONTRAK</th>
+                      <th>TANGGAL BERAKHIR KONTRAK</th>
+                      <th class="kolom-dokumen">SURAT PERSETUJUAN</th>
+                      <th class="kolom-dokumen">PERJANJIAN KERJA</th>
                     </tr>
                   </thead>
                   <tbody id="tabelHasilCetak"><tr><td colspan="12" class="text-center">Silakan pilih filter atau ketik pencarian.</td></tr></tbody>
@@ -878,13 +893,38 @@
             <td>${item.satker}</td>
             <td>${item.tglMulai}</td>
             <td>${item.tglAkhir}</td>
-            <td class="text-center">${item.linkPersetujuan ? '<a href="'+item.linkPersetujuan+'" target="_blank">Lihat Dokumen</a>' : 'Belum ada'}</td>
-            <td class="text-center">${item.linkPerjanjian ? '<a href="'+item.linkPerjanjian+'" target="_blank">Lihat Dokumen</a>' : 'Belum ada'}</td>
+            <td class="text-center kolom-dokumen isi-dokumen">${item.linkPersetujuan ? '<a href="'+item.linkPersetujuan+'" target="_blank">Lihat Dokumen</a>' : 'Belum ada'}</td>
+            <td class="text-center kolom-dokumen isi-dokumen">${item.linkPerjanjian ? '<a href="'+item.linkPerjanjian+'" target="_blank">Lihat Dokumen</a>' : 'Belum ada'}</td>
           </tr>`;
         });
+        
+        // Panggil fungsi toggle agar tampilan kolom langsung menyesuaikan pilihan dropdown
+        toggleKolomCetak();
       }).cariDataPegawai(satker, keyword);
     }
+      // Fungsi untuk menyembunyikan/menampilkan kolom Surat Persetujuan & Perjanjian Kerja saat dicetak
+    function toggleKolomCetak() {
+      var mode = document.getElementById('modeCetak').value;
+      var tabel = document.getElementById('tabelNominatif');
 
+      // Cari semua elemen header dan sel baris yang memiliki class 'kolom-dokumen'
+      var elemenDokumen = tabel.querySelectorAll('.kolom-dokumen, .isi-dokumen');
+      
+      elemenDokumen.forEach(function(el) {
+        if (mode === 'tanpa-dokumen') {
+          el.style.display = 'none';
+        } else {
+          el.style.display = '';
+        }
+      });
+
+      // Sesuaikan colspan pada pesan "Tidak ada data" jika tabel kosong
+      var trKosong = tabel.querySelector('#tabelHasilCetak tr td');
+      if (trKosong && (trKosong.getAttribute('colspan') == '10' || trKosong.getAttribute('colspan') == '12')) {
+        trKosong.setAttribute('colspan', mode === 'tanpa-dokumen' ? '10' : '12');
+      }
+    }
+    
     function exportTableToExcel() {
       var table = document.getElementById('tabelNominatif').cloneNode(true);
       var rows = table.querySelectorAll('tr');
