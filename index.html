@@ -1208,36 +1208,30 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Fungsi pemanggil proses arsip otomatis ke Cloud Kemensos
+// Fungsi pemanggil proses arsip otomatis ke Cloud Kemensos secara bertahap
 function jalankanArsipOtomatis() {
   const statusEl = document.getElementById('statusArsip');
   const btnEl = document.getElementById('btnArsipCloud');
 
-  if (!confirm("Proses ini akan mengunduh berkas PPPK PW dan mengunggahnya ke Cloud Kemensos (cloud.kemensos.go.id). Lanjutkan?")) return;
+  if (!confirm("Sistem akan memproses arsip secara bertahap (maks. 10 file per klik) agar koneksi stabil. Lanjutkan?")) return;
 
   btnEl.disabled = true;
   btnEl.style.opacity = "0.6";
-  statusEl.innerHTML = "⏳ <i>Sedang menghubungi server backend Apps Script...</i>";
+  statusEl.innerHTML = "⏳ <i>Sedang memproses dan mengunggah dokumen ke Cloud Kemensos... Harap tunggu sebentar.</i>";
 
-  fetch(SCRIPT_URL, { 
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ action: "prosesArsipCloud" })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.status === "success") {
-      statusEl.innerHTML = "✅ <b>Berhasil:</b> " + data.message;
-    } else {
-      statusEl.innerHTML = "❌ <b>Gagal:</b> " + data.message;
+  callServer("prosesArsipCloud", null, 
+    function(res) {
+      statusEl.innerHTML = "✅ <b>Berhasil:</b> " + res;
+      btnEl.disabled = false;
+      btnEl.style.opacity = "1";
+    },
+    function(err) {
+      statusEl.innerHTML = "⚠️ <b>Kesalahan:</b> " + err.message;
+      btnEl.disabled = false;
+      btnEl.style.opacity = "1";
     }
-    btnEl.disabled = false;
-    btnEl.style.opacity = "1";
-  })
-  .catch(error => {
-    statusEl.innerHTML = "⚠️ <b>Kesalahan Koneksi:</b> " + error.message;
-    btnEl.disabled = false;
-    btnEl.style.opacity = "1";
-  });
+  );
+}
 }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
